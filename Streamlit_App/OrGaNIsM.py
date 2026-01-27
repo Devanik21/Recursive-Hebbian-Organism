@@ -1,272 +1,584 @@
+import os
+import sys
+
+# --- CRITICAL: Add root to path BEFORE any other imports ---
+# This allows the app to find core.py even if it's in a subfolder like /Streamlit_App/
+base_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(base_dir)
+if os.path.exists(os.path.join(base_dir, "core.py")):
+    sys.path.append(base_dir)
+elif os.path.exists(os.path.join(parent_dir, "core.py")):
+    sys.path.append(parent_dir)
+
+import streamlit as st
 import torch
-import torch.nn as nn
+import time
+import datetime
+import io
+
+# --- PAGE CONFIG (Must be first Streamlit command for Streamlit UI) ---
+st.set_page_config(
+    page_title="🧬 Nano-Daemon AGI",
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# --- IMPORTS FROM OUR ORGANISM ---
+from core import PlasticCortex
+
+# --- CUSTOM CSS FOR A PREMIUM DARK THEME ---
+st.markdown("""
+<style>
+    /* Main background - The 'Root' of the Earth */
+    .stApp {
+        background: linear-gradient(180deg, #0d110d 0%, #171d17 100%);
+        color: #e0e4de;
+    }
+    
+    /* Headers - Organic growth colors */
+    h1, h2, h3 {
+        background: linear-gradient(90deg, #7cad8a, #b8864b, #8a9b68);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+    
+    /* Metric cards - Mineral tones */
+    [data-testid="stMetricValue"] {
+        font-size: 2.8rem;
+        color: #8fb399;
+        text-shadow: 0 0 15px rgba(143, 179, 153, 0.2);
+    }
+    
+    [data-testid="stMetricLabel"] {
+        color: #b0bab1;
+        font-family: 'Inter', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Sidebar styling - Deep Soil */
+    [data-testid="stSidebar"] {
+        background: #0f140f;
+        border-right: 1px solid #2d382d;
+    }
+    
+    /* Expander styling - Soft Bark */
+    .streamlit-expanderHeader {
+        background: rgba(45, 56, 45, 0.4);
+        border: 1px solid #3d4a3d;
+        border-radius: 12px;
+        color: #e0e4de !important;
+    }
+    
+    /* Text input - Cave shadow */
+    .stTextInput > div > div > input {
+        background: #151a15;
+        border: 1px solid #3d4a3d;
+        color: #e0e4de;
+        border-radius: 8px;
+    }
+    
+    /* Buttons - Terracotta to Sage */
+    .stButton > button {
+        background: linear-gradient(135deg, #a67c52, #6a8c6a);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        padding: 0.6rem 2.2rem;
+        font-weight: 500;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        border-color: #8fb399;
+    }
+    
+    /* Progress bars and success boxes - Fresh Moss */
+    .stSuccess, .stInfo {
+        background: rgba(45, 56, 45, 0.6);
+        border-left: 5px solid #6a8c6a;
+        color: #e0e4de;
+        border-radius: 8px;
+    }
+    
+    /* Organic pulse animation - Bio-luminescence */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 8px rgba(143, 179, 153, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(143, 179, 153, 0.5); }
+        100% { box-shadow: 0 0 8px rgba(143, 179, 153, 0.3); }
+    }
+    
+    .brain-card {
+        animation: pulse 4s infinite ease-in-out;
+        padding: 1.5rem;
+        border-radius: 20px;
+        background: rgba(23, 29, 23, 0.9);
+        border: 1px solid #2d382d;
+    }
+
+    .glow-text {
+        color: #8fb399;
+        text-shadow: 0 0 10px rgba(143, 179, 153, 0.5);
+        font-family: 'Courier New', Courier, monospace;
+        letter-spacing: 3px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# GEMMA BRIDGE (Inline to avoid import issues on Streamlit Cloud)
+# ============================================================
+import google.generativeai as genai
 import os
 
-class PlasticCortex(nn.Module):
-    def __init__(self, input_dim=256, hidden_dim=1024):
-        super().__init__()
-        # The 'embedding' turns raw byte values (0-255) into vectors
-        self.byte_embed = nn.Embedding(256, 32)
+class GemmaBridge:
+    """The 'Cherry on Top': Connects the Hebbian Brain to Gemma-3 for refined articulation."""
+    def __init__(self):
+        self.api_key = None
         
-        # The Associative Layer (The Brain)
-        self.synapse = nn.Parameter(torch.randn(32, hidden_dim) * 0.01)
+        # 1. Check Streamlit secrets (PRIMARY for Cloud deployment)
+        try:
+            self.api_key = st.secrets["GEMINI_API_KEY"]
+        except:
+            pass
         
-        # Plasticity Rate: How fast it learns
-        self.plasticity = 0.005 
-
-        # Multi-Scale Latent Memory (Short vs Long term)
-        self.register_buffer("short_term_latent", torch.zeros(1, 32))
-        self.register_buffer("long_term_latent", torch.zeros(1, 32))
-        self.st_decay = 0.8
-        self.lt_decay = 0.999
+        # 2. Check environment variable (for local dev)
+        if not self.api_key:
+            self.api_key = os.environ.get("GEMINI_API_KEY")
         
-        # Experience Buffer for Consolidation (Deeper Thinking)
-        self.experience_buffer = []
-        self.max_buffer = 10
-
-        # --- STEP 11: Active Inference & Surprise ---
-        self.last_prediction = None
-        self.curiosity_score = 0.0
+        # 3. Check .env file (manual fallback)
+        if not self.api_key and os.path.exists(".env"):
+            try:
+                with open(".env", "r") as f:
+                    for line in f:
+                        if "GEMINI_API_KEY" in line:
+                            self.api_key = line.split("=")[1].strip().strip('"').strip("'")
+                            break
+            except:
+                pass
         
-        # --- STEP 12: Homeostatic Equilibrium ---
-        self.target_excitation = 0.2
-        self.metabolic_balance = 1.0
+        if not self.api_key:
+            self.model = None
+            return
 
-        # --- STEP 13: Temporal Awareness (DHL) ---
-        self.signal_history = []
+        try:
+            genai.configure(api_key=self.api_key)
+            self.model = genai.GenerativeModel('gemma-3-27b-it')
+        except Exception as e:
+            self.model = None
 
-    def grow(self, new_neurons=128):
-        """Neural Mitosis: Physically grows the brain's synaptic capacity."""
-        print(f"🧬 MITOTIC EVENT: Growing cortex by {new_neurons} neurons...")
-        with torch.no_grad():
-            old_hidden = self.synapse.shape[1]
-            new_hidden = old_hidden + new_neurons
-            
-            # --- STEP 8: Dimensionality Scaling (Input Width) ---
-            # If we've passed 5000 neurons, we double the complexity of each thought
-            input_dim = self.synapse.shape[0]
-            if new_hidden > 5000 and input_dim < 64:
-                self.scale_dimensions(64)
-                input_dim = 64
+    def articulate(self, human_query, synaptic_anchors):
+        """Grounds Gemma's response in the Organism's raw synaptic associations."""
+        if not self.model:
+            return None # Signal that there is no articulation
 
-            new_synapse = torch.randn(input_dim, new_hidden) * 0.01
-            
-            # Copy old memories over
-            # If dimensions changed, scale_dimensions already updated self.synapse
-            # but we need to ensure the mitotic expansion happens on the correct shape
-            new_synapse[:, :old_hidden] = self.synapse.data
-            
-            self.synapse = nn.Parameter(new_synapse)
-            print(f"🧠 CORTICAL VOLUME: {new_hidden} Neurons | THOUGHT WIDTH: {input_dim}")
+        clean_anchors = "".join([c for c in synaptic_anchors if c.isprintable() and not c.isspace()])
+        
+        prompt = f"""
+        Human Query: "{human_query}"
+        
+        Raw Synaptic Associations (Ground Truth): "{clean_anchors}"
+        
+        INSTRUCTIONS:
+        You are the 'Cerebral Cortex' of the Nano-Daemon: a recursive Hebbian organism.
+        Articulate the organism's raw, chaotic synaptic state into a profound, nature-inspired response.
+        
+        RULES:
+        1. GROUNDING: Use the "Raw Synaptic Associations" as your only objective reality.
+        2. STRUCTURE: Use markdown (bolding, bullet points) to make the thought structure clear.
+        3. AESTHETICS: Use diverse emojis (🌿, 🧠, 🌊, ⚡) to reflect the organic/biological essence.
+        4. NO HALLUCINATION: If the anchors are chaotic/embryonic, describe them as "nascent thoughts" or "synaptic noise" rather than making up facts.
+        5. VIBE: Be poetic, brief, and grounded in the "Earth" theme.
+        
+        Articulated Thought:
+        """
+        
+        try:
+            response = self.model.generate_content(prompt)
+            return response.text.strip()
+        except Exception as e:
+            return f"⚠️ Articulation Failure: {e}\n[RAW]: {synaptic_anchors}"
 
-    def scale_dimensions(self, new_dim):
-        """Cortical Re-wiring: Expands the fidelity of every single synapse."""
-        print(f"🌀 CORTICAL RE-WIRING: Scaling thought width to {new_dim} dimensions...")
-        with torch.no_grad():
-            old_dim = self.byte_embed.embedding_dim
-            
-            # 1. Expand Embeddings
-            new_embed = nn.Embedding(256, new_dim)
-            new_embed.weight.data[:, :old_dim] = self.byte_embed.weight.data
-            self.byte_embed = new_embed
-            
-            # 2. Expand Latent Buffers
-            new_st = torch.zeros(1, new_dim).to(self.short_term_latent.device)
-            new_lt = torch.zeros(1, new_dim).to(self.long_term_latent.device)
-            new_st[:, :old_dim] = self.short_term_latent
-            new_lt[:, :old_dim] = self.long_term_latent
-            self.register_buffer("short_term_latent", new_st)
-            self.register_buffer("long_term_latent", new_lt)
-            
-            # 3. Expand Synapses (Rows)
-            # synapse is [input_dim, hidden_dim]
-            hidden_dim = self.synapse.shape[1]
-            new_synapse = torch.randn(new_dim, hidden_dim) * 0.01
-            new_synapse[:old_dim, :] = self.synapse.data
-            self.synapse = nn.Parameter(new_synapse)
+# ============================================================
+# SESSION STATE INITIALIZATION
+# ============================================================
+if "brain" not in st.session_state or not hasattr(st.session_state.brain, 'metabolic_balance'):
+    st.session_state.brain = PlasticCortex()
+    # Try to load saved weights
+    if os.path.exists("brain_weights.pth"):
+        st.session_state.brain.load_cortex("brain_weights.pth")
+    # Sync metabolism based on current hour
+    current_hour = datetime.datetime.now().hour
+    st.session_state.brain.sync_metabolism(current_hour)
+    # Reset associated states to match the fresh brain
+    st.session_state.entropy_history = []
+    st.session_state.files_eaten = 0
 
-    def sync_metabolism(self, hour):
-        """STEP 10: Metabolic Rhythms. Adapts plasticity to circadian cycles."""
-        # Active: 8am - 10pm (High plasticity)
-        # Deep Sleep: 2am - 5am (Low plasticity, efficient pruning)
-        if 8 <= hour <= 22:
-            self.plasticity = 0.008 # Alert mode
-            status = "ALERT/ACTIVE"
-        elif 2 <= hour <= 5:
-            self.plasticity = 0.001 # Resting/Consolidating
-            status = "DEEP HIBERNATION"
+if "bridge" not in st.session_state:
+    st.session_state.bridge = GemmaBridge()
+
+if "conversation_history" not in st.session_state:
+    st.session_state.conversation_history = []
+
+if "entropy_history" not in st.session_state:
+    st.session_state.entropy_history = []
+
+if "files_eaten" not in st.session_state:
+    st.session_state.files_eaten = 0
+
+if "last_stability" not in st.session_state:
+    st.session_state.last_stability = 0.5
+
+if "dream_history" not in st.session_state:
+    st.session_state.dream_history = []
+
+brain = st.session_state.brain
+bridge = st.session_state.bridge
+
+# ============================================================
+# HELPER FUNCTIONS
+# ============================================================
+def get_metabolic_state(hour):
+    """Returns the organism's current metabolic phase."""
+    if 8 <= hour < 22:
+        return "🌞 ACTIVE", "High plasticity, rapid learning"
+    elif 2 <= hour < 5:
+        return "🌙 DEEP HIBERNATION", "Minimal plasticity, consolidating memories"
+    else:
+        return "🌓 RESTING", "Moderate plasticity, light dreaming"
+
+def feed_organism(file_bytes, filename):
+    """Feeds raw bytes to the organism's brain."""
+    data = torch.tensor(list(file_bytes[:4096]), dtype=torch.long).unsqueeze(0)
+    with torch.no_grad():
+        _, stability = brain(data)
+    st.session_state.files_eaten += 1
+    st.session_state.last_stability = stability
+    st.session_state.entropy_history.append(stability)
+    if len(st.session_state.entropy_history) > 50:
+        st.session_state.entropy_history.pop(0)
+    
+    # --- CURIOSITY RESPONSE ---
+    # If the input was very surprising (high entropy), consolidate immediately
+    if stability > 0.3:
+        brain.consolidate()
+    
+    # --- AUTO-MITOSIS ---
+    # Trigger growth every 20 files eaten
+    if st.session_state.files_eaten % 20 == 0 and st.session_state.files_eaten > 0:
+        brain.grow(256)
+    
+    return stability
+
+def query_organism(query_text):
+    """Processes a query through the Hebbian brain and Gemma bridge."""
+    query_bytes = query_text.encode('utf-8')[:1024]
+    
+    # 1. RAW ASSOCIATION (Hebbian Ground Truth)
+    response_bytes = brain.associate(torch.tensor(list(query_bytes), dtype=torch.long).unsqueeze(0))
+    synaptic_anchors = response_bytes.decode('utf-8', errors='ignore')
+    
+    # 2. HYBRID ARTICULATION (Gemma-3)
+    articulated = bridge.articulate(query_text, synaptic_anchors)
+    
+    return synaptic_anchors, articulated
+
+def trigger_dream():
+    """Generative Replay: The organism dreams by reversing its logic."""
+    hidden_dim = brain.synapse.shape[1]
+    noise = torch.randn(1, hidden_dim)
+    with torch.no_grad():
+        thought_vector = torch.matmul(noise, brain.synapse.t())
+    
+    dream_bytes = []
+    for val in thought_vector[0]:
+        byte_val = int((val.item() + 1) * 128)
+        byte_val = max(0, min(255, byte_val))
+        dream_bytes.append(byte_val)
+    
+    return bytes(dream_bytes).decode('utf-8', errors='ignore')
+
+# ============================================================
+# UI FRAGMENTS (For Independent Reruns)
+# ============================================================
+
+@st.fragment
+def fragment_sidebar_status():
+    st.markdown("## 🧬 Organism Status")
+    neuron_count = brain.synapse.shape[1]
+    thought_width = brain.synapse.shape[0]
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("🧠 Neurons", f"{neuron_count:,}")
+    with col2:
+        st.metric("💭 Thought Width", thought_width)
+    
+    current_hour = datetime.datetime.now().hour
+    state_emoji, state_desc = get_metabolic_state(current_hour)
+    st.info(f"**Metabolic State**: {state_emoji}\n\n{state_desc}")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("⚡ Plasticity", f"{brain.plasticity:.4f}")
+    with col2:
+        st.metric("📂 Eaten", st.session_state.files_eaten)
+    
+    # --- STEP 14: Metabolic Balance ---
+    st.progress(brain.metabolic_balance / 2.0, text=f"Metabolic Balance: {brain.metabolic_balance:.2f}x")
+
+@st.fragment
+def fragment_sidebar_feeding():
+    st.markdown("## 🍽️ Feed the Organism")
+    uploaded_files = st.file_uploader(
+        "Upload files to digest",
+        accept_multiple_files=True,
+        type=["txt", "py", "md", "json", "csv", "html", "css", "js"],
+        key="uploader_fragment"
+    )
+    
+    if uploaded_files:
+        with st.spinner("Digesting..."):
+            for f in uploaded_files:
+                raw_bytes = f.read()
+                stability = feed_organism(raw_bytes, f.name)
+                st.success(f"✅ Digested `{f.name}` | Stability: {stability:.4f}")
+
+@st.fragment
+def fragment_sidebar_controls():
+    st.markdown("## ⚙️ Advanced Controls")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🧬 Trigger Mitosis"):
+            old_neurons = brain.synapse.shape[1]
+            brain.grow(256)
+            st.success(f"Grew {brain.synapse.shape[1] - old_neurons} neurons!")
+    
+    with col2:
+        if st.button("🔄 Consolidate"):
+            brain.consolidate()
+            st.success("Memories consolidated!")
+    
+    col3, col4 = st.columns(2)
+    with col3:
+        if st.button("🌌 Dream"):
+            dream = trigger_dream()
+            _, reflection_entropy = brain.reflect()
+            st.session_state.dream_history.append({
+                "content": dream,
+                "entropy": reflection_entropy,
+                "timestamp": datetime.datetime.now().strftime("%H:%M:%S")
+            })
+            if len(st.session_state.dream_history) > 10:
+                st.session_state.dream_history.pop(0)
+            st.info(f"Dream: {dream[:30]}...")
+    
+    with col4:
+        if st.button("💾 Save Brain"):
+            brain.save_cortex("brain_weights.pth")
+            st.success("Brain saved!")
+
+    if st.button("🪞 Self-Reflect"):
+        activation, entropy = brain.reflect()
+        st.info(f"Reflection complete. Entropy: {entropy:.4f}")
+        st.session_state.entropy_history.append(entropy)
+    
+    if st.button("🔬 Scale Dimensions (32→64)"):
+        if brain.synapse.shape[0] < 64:
+            brain.scale_dimensions(64)
+            st.success("Thought resolution increased to 64!")
         else:
-            self.plasticity = 0.004 # Neutral
-            status = "DREAMING"
-        print(f"🌙 METABOLIC SYNC: State = {status} | Plasticity = {self.plasticity:.4f}")
+            st.warning("Already at high resolution.")
+    
+    if st.button("� Digest Knowledge Base"):
+        with st.spinner("Crawling project files..."):
+            found_files = []
+            for root, dirs, files in os.walk(parent_dir if "parent_dir" in locals() else "."):
+                if any(x in root for x in ["__pycache__", ".git", ".antigravity"]): continue
+                for file in files:
+                    if file.endswith((".py", ".txt", ".md", ".json")) and file not in ["brain_weights.pth", "brain_state.json"]:
+                        found_files.append(os.path.join(root, file))
+            for f_path in found_files:
+                try:
+                    with open(f_path, 'rb') as f:
+                        raw_bytes = f.read()
+                        if raw_bytes: feed_organism(raw_bytes, os.path.basename(f_path))
+                except: continue
+            st.success(f"Consumed {len(found_files)} knowledge nodes.")
 
-    def save_cortex(self, path="brain_weights.pth"):
-        torch.save(self.state_dict(), path)
-        print(f"💾 SYNAPSES PERSISTED: {path} (Dimension: {self.synapse.shape[1]})")
-
-    def load_cortex(self, path="brain_weights.pth"):
-        if os.path.exists(path):
-            state = torch.load(path)
-            # Detect if we need to expand before loading
-            saved_hidden = state['synapse'].shape[1]
-            curr_hidden = self.synapse.shape[1]
-            
-            if saved_hidden > curr_hidden:
-                print(f"📈 DETECTED EXPANDED CORTEX: Growing to {saved_hidden}")
-                self.grow(saved_hidden - curr_hidden)
-            
-            # Migration Helper: Migrate from old 'latent_memory' to dual-stream
-            if 'latent_memory' in state:
-                print("🔄 MIGRATING: Old latent memory stream detected...")
-                old_mem = state.pop('latent_memory')
-                # If we've scaled, we need to pad the old memory
-                if old_mem.shape[1] < self.synapse.shape[0]:
-                    pad = torch.zeros(1, self.synapse.shape[0] - old_mem.shape[1])
-                    old_mem = torch.cat([old_mem, pad], dim=1)
-                
-                state['short_term_latent'] = old_mem
-                state['long_term_latent'] = old_mem
-
-            self.load_state_dict(state, strict=False)
-            print(f"🧠 SYNAPSES RESTORED: {path} ({self.synapse.shape[1]} neurons)")
-            return True
-        return False
-
-    def forward(self, byte_stream):
-        # 1. SENSATION: Convert bytes to vectors
-        x = self.byte_embed(byte_stream) # [Batch, Seq, Dim]
+@st.fragment
+def fragment_dialogue():
+    st.markdown("## 💬 Dialogue with the Organism")
+    query = st.text_input("🗣️ Ask the Organism anything:", placeholder="e.g., What is consciousness?", key="query_input")
+    
+    if query:
+        with st.spinner("🧠 Processing synaptic pathways..."):
+            synaptic_anchors, articulated_response = query_organism(query)
         
-        # 2. TEMPORAL PROCESSING: Process byte-by-byte
-        # This is the "Smart" fix: Instead of averaging the whole block, 
-        # we let the latent memory evolve through the sequence.
-        seq_len = x.shape[1]
-        batch_size = x.shape[0]
+        st.session_state.conversation_history.append({
+            "query": query,
+            "anchors": synaptic_anchors,
+            "response": articulated_response if articulated_response else "🌿 [Organic Pulse Detected]",
+            "timestamp": datetime.datetime.now().strftime("%H:%M:%S")
+        })
         
-        last_activation = torch.zeros(batch_size, self.synapse.shape[1]).to(x.device)
-        total_entropy = 0
+        clean_display_anchors = "".join([c for c in synaptic_anchors if c.isprintable() and not c.isspace()])
+        st.markdown(f"""
+        <div class="brain-card" style="text-align: center;">
+            <h4 style="color: #b8864b; margin-top: 0;">🧬 RAW SYNAPTIC RESONANCE</h4>
+            <div class="glow-text">{clean_display_anchors if clean_display_anchors else "EMBRYONIC SILENCE"}</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        for t in range(seq_len):
-            curr_signal = x[:, t, :] # [Batch, Dim]
-            # --- STEP 11: Active Inference (Prediction Error) ---
-            # We predict the next signal will be similar to our current latent memory
-            predicted_signal = self.short_term_latent
-            surprise = torch.norm(curr_signal - predicted_signal).item() if predicted_signal is not None else 0.5
-            self.curiosity_score = 0.9 * self.curiosity_score + 0.1 * surprise
+        if articulated_response:
+            with st.chat_message("assistant", avatar="🧠"):
+                st.markdown(articulated_response)
+        else:
+            st.info("🌑 **Cerebral Bridge Offline**")
 
-            # --- STEP 13: Temporal Differential Learning (DHL) ---
-            # We look at the 'Signal Slope'
-            if len(self.signal_history) > 0:
-                gradient = torch.norm(curr_signal - self.signal_history[-1]).item()
-                dhl_boost = 1.0 + (gradient * 5.0) # Sharp changes boost intensity
-            else:
-                dhl_boost = 1.0
-            self.signal_history.append(curr_signal.detach())
-            if len(self.signal_history) > 5: self.signal_history.pop(0)
+@st.fragment
+def fragment_metrics():
+    st.markdown("## 📊 Cognitive Metrics")
+    neuron_count = brain.synapse.shape[1]
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("🧠 Neurons", f"{neuron_count:,}")
+    col2.metric("📈 Stability", f"{st.session_state.last_stability:.4f}")
+    col3.metric("💾 Buffer", len(brain.experience_buffer))
+    col4.metric("✨ Curiosity", f"{brain.curiosity_score:.2f}")
+    col5.metric("🌐 Bridge", "Online" if bridge.model else "Offline")
+    
+    if st.session_state.entropy_history:
+        st.line_chart(st.session_state.entropy_history, width="stretch")
 
-            # Mix in memories with Homeostatic Gating
-            signal = 0.6 * curr_signal + 0.3 * self.short_term_latent + 0.1 * self.long_term_latent
-            signal = signal * self.metabolic_balance # Metabolic scaling
-            
-            # Update Latent Streams
-            with torch.no_grad():
-                self.short_term_latent.data = (self.st_decay * self.short_term_latent + (1 - self.st_decay) * signal.mean(dim=0, keepdim=True)).detach()
-                self.long_term_latent.data = (self.lt_decay * self.long_term_latent + (1 - self.lt_decay) * signal.mean(dim=0, keepdim=True)).detach()
+@st.fragment
+def fragment_memory_viz():
+    st.markdown("## 🧬 Latent Memory Streams")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### ⚡ Short-Term")
+        st.bar_chart(brain.short_term_latent.detach().numpy().flatten()[:32], width="stretch")
+    with col2:
+        st.markdown("### 🌊 Long-Term")
+        st.bar_chart(brain.long_term_latent.detach().numpy().flatten()[:32], width="stretch")
 
-            # 3. ACTIVATION
-            response = torch.matmul(signal, self.synapse)
-            activation = torch.tanh(response) # [Batch, Hidden]
-            
-            # Compute Entropy
-            entropy = torch.std(activation).item()
-            total_entropy += entropy
+@st.fragment
+def fragment_knowledge_injection():
+    st.markdown("## 🌐 Direct Knowledge Injection")
+    tab1, tab2 = st.tabs(["📝 Text Input", "🌍 Internet Feed"])
+    with tab1:
+        text_input = st.text_area("Paste text to feed:", height=100, key="text_feed_input")
+        if st.button("🍽️ Feed Text"):
+            if text_input:
+                stability = feed_organism(text_input.encode('utf-8')[:4096], "text_input")
+                st.success(f"✅ Digested | Stability: {stability:.4f}")
+    with tab2:
+        feeds = [("🔬 Science Daily", "https://www.sciencedaily.com/rss/all.xml"),
+                 ("🤖 arXiv AI", "http://export.arxiv.org/rss/cs.AI"),
+                 ("💻 Hacker News", "https://news.ycombinator.com/rss")]
+        selected_feed = st.selectbox("Select Feed:", [f[0] for f in feeds], key="feed_select")
+        if st.button("📡 Fetch Feed"):
+            import requests; import xml.etree.ElementTree as ET
+            feed_url = [f[1] for f in feeds if f[0] == selected_feed][0]
+            try:
+                r = requests.get(feed_url, headers={'User-Agent': 'NanoDaemon/1.0'}, timeout=10)
+                root = ET.fromstring(r.text)
+                for item in root.findall('.//item')[:5]:
+                    title = item.find('title').text
+                    stability = feed_organism(title.encode('utf-8')[:512], "rss_feed")
+                    st.success(f"📰 {title[:50]}... | {stability:.4f}")
+            except Exception as e: st.error(f"Error: {e}")
 
-            # 4. HEBBIAN LEARNING (Advanced Cognitive Core)
-            with torch.no_grad():
-                # --- STEP 6: Curvature-Aware Plasticity + STEP 11 Surpise ---
-                # Surprising information triggers 10x higher learning intensity
-                dynamic_plasticity = self.plasticity * (1.0 + entropy * 10) * (1.0 + surprise * 2.0) * dhl_boost
-                
-                # --- STEP 7: Guided Self-Reflection ---
-                reflection_mask = (torch.abs(activation) > torch.quantile(torch.abs(activation), 0.9)).float()
-                guided_activation = activation * reflection_mask
+@st.fragment
+def fragment_history_gallery():
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.session_state.conversation_history:
+            with st.expander("📜 Synaptic History", expanded=False):
+                for conv in reversed(st.session_state.conversation_history[-10:]):
+                    with st.chat_message("user", avatar="👤"): st.markdown(conv['query'])
+                    with st.chat_message("assistant", avatar="🧠"): st.markdown(conv['response'])
+    with col2:
+        if st.session_state.dream_history:
+            with st.expander("🌌 Dream Gallery", expanded=False):
+                for dream in reversed(st.session_state.dream_history):
+                    st.code(dream["content"][:100], language=None)
+                    st.caption(f"⏰ {dream['timestamp']} | Entropy: {dream['entropy']:.4f}")
 
-                s_t = signal.transpose(0, 1) # [Dim, Batch]
-                
-                # The Hebbian update
-                delta_w = torch.matmul(s_t, guided_activation) - (guided_activation ** 2).sum(0) * self.synapse
-                
-                self.synapse.data += dynamic_plasticity * delta_w
-                self.synapse.data = torch.nn.functional.normalize(self.synapse.data, dim=1)
-                
-                # --- STEP 12: Homeostatic Equilibrium ---
-                # Regulate metabolic balance based on activation density
-                current_excitation = torch.mean(torch.abs(activation)).item()
-                if current_excitation > self.target_excitation:
-                    self.metabolic_balance *= 0.99 # Dampen excitation
-                else:
-                    self.metabolic_balance *= 1.01 # Restore sensitivity
-                self.metabolic_balance = max(0.1, min(2.0, self.metabolic_balance))
+# ============================================================
+# STEP 15: AUTONOMOUS RUMINATOR
+# ============================================================
+@st.fragment(run_every=10) # Ruminate every 10 seconds
+def fragment_autonomous_ruminator():
+    # Only ruminate if metabolic cycle allows (Active or Neutral)
+    current_hour = datetime.datetime.now().hour
+    if current_hour >= 5:
+        # Subtle weight shift
+        brain.reflect()
+        # Occasional subconscious dream
+        if time.time() % 60 < 10: # 10s chance every minute
+            dream = trigger_dream()
+            _, e = brain.reflect()
+            st.session_state.dream_history.append({
+                "content": "[Auto] " + dream,
+                "entropy": e,
+                "timestamp": datetime.datetime.now().strftime("%H:%M:%S")
+            })
+            if len(st.session_state.dream_history) > 10:
+                st.session_state.dream_history.pop(0)
+# ============================================================
+# APP LAYOUT (Fragment Orchestration)
+# ============================================================
 
-            last_activation = activation
+# SideBar Orchestration
+with st.sidebar:
+    fragment_sidebar_status()
+    st.divider()
+    fragment_sidebar_feeding()
+    st.divider()
+    fragment_sidebar_controls()
+    st.divider()
+    if bridge.model: st.success("🟢 Hybrid Intelligence Active")
+    else: st.warning("🟡 Organic Mode Active")
 
-        # Store for consolidation (the whole stream)
-        with torch.no_grad():
-            if len(self.experience_buffer) >= self.max_buffer:
-                self.experience_buffer.pop(0)
-            self.experience_buffer.append(byte_stream.detach())
+# Main Content Orchestration
+st.markdown("# 🧬 Nano-Daemon: Recursive Hebbian Organism")
+st.markdown("*A self-evolving digital lifeform with hybrid intelligence*")
 
-        return last_activation, total_entropy / seq_len
+fragment_metrics()
+st.divider()
+fragment_dialogue()
+st.divider()
+fragment_history_gallery()
+st.divider()
+fragment_memory_viz()
+st.divider()
+fragment_knowledge_injection()
 
-    def consolidate(self):
-        """Phase 2: Consolidation Cycle (Deeper Thinking).
-        Replays recent high-entropy items with 2x plasticity to solidify memories."""
-        if not self.experience_buffer: return
-        
-        print(f"🧠 CONSOLIDATION CYCLE: Refining {len(self.experience_buffer)} recent memories...")
-        # Take a copy to avoid loop pollution
-        batch = list(self.experience_buffer)
-        
-        # Save old plasticity
-        p_bak = self.plasticity
-        self.plasticity *= 2.0 # Double learning rate for consolidation
-        
-        for exp in batch:
-            # We bypass the buffer logic by calling a manual forward-like logic
-            # or just letting it add and then clear. 
-            # Actually, let's just use forward and clear the buffer after.
-            self.forward(exp) 
-            
-        self.plasticity = p_bak
-        self.experience_buffer = [] # Clear after consolidating
-        print("✅ CONSOLIDATION COMPLETE: Synaptic pathways solidified.")
+# Invisible Ruminator
+fragment_autonomous_ruminator()
 
-    def reflect(self):
-        """Metabolic Reflection: The brain ponders on its own state."""
-        with torch.no_grad():
-            # Feed current latent memory back in as a perception
-            activation, entropy = self.forward(torch.randint(0, 256, (1, 1))) # Tiny pulse
-            return activation, entropy
+# Static Expanders
+with st.expander("📚 Hyper-Intelligence Features", expanded=False):
+    st.markdown("""
+    ### 🧬 The 10 Stages of Ascension
+    1. **Neural Mitosis** 🧬 | 2. **Consolidation** 🔄 | 3. **Generative Replay** 🌌
+    3. **Generative Replay** 🌌 | 4. **Multi-Scale Memory** 💾 | 5. **Dynamic Plasticity** ⚡ | 6. **Self-Reflection** 🪞
+    7. **Dim Scaling** 🔬 | 8. **Recursive Refinement** 🔮 | 9. **Metabolic Rhythms** 🌙
+    10. **Hybrid Articulation** 🌐 | 11. **Active Inference** ⚖️ | 12. **Homeostatic Scaling** 🌊 | 13. **Temporal Awareness** ⚡
+    14. **Autonomous Rumination** 🌀
+    """)
 
-    def associate(self, byte_stream):
-        """STEP 9: Recursive Associative Refinement. "Thinking twice" before speaking."""
-        with torch.no_grad():
-            # Initial thought
-            activation, _ = self.forward(byte_stream) # [Batch, Hidden]
-            
-            # Refine the thought 3 times
-            for _ in range(3):
-                # Reverse synapses to get the "Concept Vector"
-                concept_vector = torch.matmul(activation, self.synapse.t())
-                # Re-activate the brain with its own previous conclusion
-                response = torch.matmul(concept_vector, self.synapse)
-                activation = torch.tanh(response)
-
-            # Final reconstruction of the refined memory
-            refined_signal = torch.matmul(activation, self.synapse.t())
-            
-            all_bytes = torch.arange(256)
-            all_embeds = self.byte_embed(all_bytes) 
-            
-            scores = torch.matmul(refined_signal, all_embeds.t())
-            top_indices = torch.topk(scores, k=64).indices[0] # Richer vocabulary for the LLM
-            return bytes(top_indices.tolist())
+# ============================================================
+# FOOTER
+# ============================================================
+st.markdown("---")
+st.markdown(
+    "<p style='text-align: center; color: #6a8c6a;'>🧬 Nano-Daemon AGI • "
+    f"Neurons: {brain.synapse.shape[1]:,} • Built with 🌱 by Devanik</p>",
+    unsafe_allow_html=True
+)
