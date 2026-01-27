@@ -133,7 +133,7 @@ st.markdown("""
 # ============================================================
 # GEMMA BRIDGE (Inline to avoid import issues on Streamlit Cloud)
 # ============================================================
-import google.generativeai as genai
+from google import genai
 import os
 
 class GemmaBridge:
@@ -163,18 +163,17 @@ class GemmaBridge:
                 pass
         
         if not self.api_key:
-            self.model = None
+            self.client = None
             return
 
         try:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemma-3-27b-it')
+            self.client = genai.Client(api_key=self.api_key)
         except Exception as e:
-            self.model = None
+            self.client = None
 
     def articulate(self, human_query, synaptic_anchors):
         """Grounds Gemma's response in the Organism's raw synaptic associations."""
-        if not self.model:
+        if not self.client:
             return None # Signal that there is no articulation
 
         clean_anchors = "".join([c for c in synaptic_anchors if c.isprintable() and not c.isspace()])
@@ -199,7 +198,10 @@ class GemmaBridge:
         """
         
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model='gemma-3-27b-it',
+                contents=prompt
+            )
             return response.text.strip()
         except Exception as e:
             return f"⚠️ Articulation Failure: {e}\n[RAW]: {synaptic_anchors}"
@@ -465,7 +467,7 @@ def fragment_metrics():
     col2.metric("📈 Stability", f"{st.session_state.last_stability:.4f}")
     col3.metric("💾 Buffer", len(brain.experience_buffer))
     col4.metric("✨ Curiosity", f"{brain.curiosity_score:.2f}")
-    col5.metric("🌐 Bridge", "Online" if bridge.model else "Offline")
+    col5.metric("🌐 Bridge", "Online" if bridge.client else "Offline")
     
     # Row 2: AGI Endgame metrics
     st.markdown("### 🌌 AGI Endgame Status")
@@ -574,7 +576,7 @@ with st.sidebar:
     st.divider()
     fragment_sidebar_controls()
     st.divider()
-    if bridge.model: st.success("🟢 Hybrid Intelligence Active")
+    if bridge.client: st.success("🟢 Hybrid Intelligence Active")
     else: st.warning("🟡 Organic Mode Active")
 
 # Main Content Orchestration
