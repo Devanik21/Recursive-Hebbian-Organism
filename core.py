@@ -146,6 +146,7 @@ class PlasticCortex(nn.Module):
         total_entropy = 0
         
         for t in range(seq_len):
+            curr_signal = x[:, t, :] # [Batch, Dim]
             # --- STEP 11: Active Inference (Prediction Error) ---
             # We predict the next signal will be similar to our current latent memory
             predicted_signal = self.short_term_latent
