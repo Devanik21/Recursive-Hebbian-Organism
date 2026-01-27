@@ -385,47 +385,68 @@ def fragment_sidebar_controls():
             brain.save_cortex("brain_weights.pth")
             st.success("Brain saved!")
 
-    if st.button("🪞 Self-Reflect"):
-        activation, entropy = brain.reflect()
-        st.info(f"Reflection complete. Entropy: {entropy:.4f}")
-        st.session_state.entropy_history.append(entropy)
-    
-    if st.button("🔬 Scale Dimensions (32→64)"):
-        if brain.synapse.shape[0] < 64:
-            brain.scale_dimensions(64)
-            st.success("Thought resolution increased to 64!")
-        else:
-            st.warning("Already at high resolution.")
-    
-    if st.button("� Digest Knowledge Base"):
-        with st.spinner("Crawling project files..."):
-            found_files = []
-            for root, dirs, files in os.walk(parent_dir if "parent_dir" in locals() else "."):
-                if any(x in root for x in ["__pycache__", ".git", ".antigravity"]): continue
-                for file in files:
-                    if file.endswith((".py", ".txt", ".md", ".json")) and file not in ["brain_weights.pth", "brain_state.json"]:
-                        found_files.append(os.path.join(root, file))
-            for f_path in found_files:
-                try:
-                    with open(f_path, 'rb') as f:
-                        raw_bytes = f.read()
-                        if raw_bytes: feed_organism(raw_bytes, os.path.basename(f_path))
-                except: continue
-            st.success(f"Consumed {len(found_files)} knowledge nodes.")
-    
     st.divider()
-    st.markdown("### 🌌 AGI Endgame Controls")
+    st.markdown("### 🧬 Cognitive Overrides (Stages 1-14)")
     
-    col1, col2 = st.columns(2)
-    with col1:
+    col_met1, col_met2, col_met3 = st.columns(3)
+    with col_met1:
+        if st.button("🌞 Alert"):
+            brain.sync_metabolism(12) # Noon
+            st.toast("Metabolic Shift: ALERT")
+    with col_met2:
+        if st.button("🌓 Rest"):
+            brain.sync_metabolism(0) # Midnight
+            st.toast("Metabolic Shift: RESTING")
+    with col_met3:
+        if st.button("🌙 Sleep"):
+            brain.sync_metabolism(3) # Deep Sleep hour
+            st.toast("Metabolic Shift: HIBERNATION")
+
+    if st.button("🔄 Refine Current Thought (Stage 8)"):
+        # Use existing associate logic as a refinement pass
+        refined_bytes = brain.associate(torch.randint(0, 256, (1, 1))) # Pulse
+        st.info(f"Refined Synaptic Flow: {refined_bytes.decode('utf-8', errors='ignore')[:30]}...")
+
+    st.divider()
+    st.markdown("### 🌌 AGI Endgame Controls (Stages 15-21)")
+    
+    # Criticality Slider (Stage 21)
+    new_crit = st.slider("Criticality (Order ↔ Chaos)", 0.0, 1.0, float(brain.criticality_score), 0.05)
+    brain.criticality_score = new_crit
+    
+    col_agi1, col_agi2 = st.columns(2)
+    with col_agi1:
         if st.button("😴 Deep Sleep"):
-            brain.deep_sleep()
-            st.success("Deep Sleep complete! Synapses pruned.")
-    
-    with col2:
-        if st.button("👤 Switch Perspective"):
+            with st.spinner("Pruning synapses..."):
+                brain.deep_sleep()
+            st.success("Deep Sleep complete!")
+            
+        if st.button("🔮 Predict Future"):
+            if brain.world_model_prediction is not None:
+                # Use Causal Graph + World Model to guess next indices
+                predicted_bytes = brain.associate(torch.randint(0, 256, (1, 1)))
+                st.write(f"**Predicted Next State:** `{predicted_bytes.decode('utf-8', errors='ignore')[:50]}...`")
+            else:
+                st.warning("World model not yet initialized.")
+
+    with col_agi2:
+        if st.button("👤 Switch View"):
             brain.switch_perspective(to_other=not brain.processing_other)
-            st.info(f"Now in '{brain.get_agi_status()['perspective']}' mode")
+            st.toast(f"Perspective: {'Other' if brain.processing_other else 'Self'}")
+            
+        if st.button("🔗 Causal Peek"):
+            if brain.causal_graph:
+                # Show top transitions
+                all_trans = []
+                for p_h, nexts in brain.causal_graph.items():
+                    for n_h, count in nexts.items():
+                        all_trans.append((count, p_h, n_h))
+                all_trans.sort(reverse=True)
+                top = all_trans[:3]
+                msg = "\n".join([f"Node {t[1]} → {t[2]} (x{t[0]})" for t in top])
+                st.info(f"**Top Causal Chains:**\n{msg}")
+            else:
+                st.info("No causal nodes mapped yet.")
 
 @st.fragment
 def fragment_dialogue():
