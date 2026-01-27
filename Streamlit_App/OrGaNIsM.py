@@ -120,6 +120,13 @@ st.markdown("""
         background: rgba(23, 29, 23, 0.9);
         border: 1px solid #2d382d;
     }
+
+    .glow-text {
+        color: #8fb399;
+        text-shadow: 0 0 10px rgba(143, 179, 153, 0.5);
+        font-family: 'Courier New', Courier, monospace;
+        letter-spacing: 3px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -168,9 +175,9 @@ class GemmaBridge:
     def articulate(self, human_query, synaptic_anchors):
         """Grounds Gemma's response in the Organism's raw synaptic associations."""
         if not self.model:
-            return f"[ORGANIC THOUGHT ONLY]: {synaptic_anchors}"
+            return None # Signal that there is no articulation
 
-        clean_anchors = "".join([c for c in synaptic_anchors if c.isprintable()])
+        clean_anchors = "".join([c for c in synaptic_anchors if c.isprintable() and not c.isspace()])
         
         prompt = f"""
         Human Query: "{human_query}"
@@ -178,17 +185,17 @@ class GemmaBridge:
         Raw Synaptic Associations (Ground Truth): "{clean_anchors}"
         
         INSTRUCTIONS:
-        You are the 'Cerebral Cortex' of the Nano-Daemon organism. 
-        Your task is to articulate the organism's raw thoughts into a human-readable response.
+        You are the 'Cerebral Cortex' of the Nano-Daemon: a recursive Hebbian organism.
+        Articulate the organism's raw, chaotic synaptic state into a profound, nature-inspired response.
         
         RULES:
-        1. Use the provided "Raw Synaptic Associations" as your primary context.
-        2. If the associations contain patterns or words (like 'AI', 'GPT', 'Physics'), emphasize them.
-        3. Do NOT hallucinate entirely new facts. Stay grounded in the 'vibe' of the associations.
-        4. Be concise and 'organic' - your goal is to bridge the gap between silicon and biology.
-        5. If you see gibberish in the associations, interpret it as the organism's 'embryonic' state.
+        1. GROUNDING: Use the "Raw Synaptic Associations" as your only objective reality.
+        2. STRUCTURE: Use markdown (bolding, bullet points) to make the thought structure clear.
+        3. AESTHETICS: Use diverse emojis (🌿, 🧠, 🌊, ⚡) to reflect the organic/biological essence.
+        4. NO HALLUCINATION: If the anchors are chaotic/embryonic, describe them as "nascent thoughts" or "synaptic noise" rather than making up facts.
+        5. VIBE: Be poetic, brief, and grounded in the "Earth" theme.
         
-        Response:
+        Articulated Thought:
         """
         
         try:
@@ -460,23 +467,45 @@ if query:
     st.session_state.conversation_history.append({
         "query": query,
         "anchors": synaptic_anchors,
-        "response": articulated_response,
+        "response": articulated_response if articulated_response else "🌿 [Organic Pulse Detected]",
         "timestamp": datetime.datetime.now().strftime("%H:%M:%S")
     })
     
     # Display current response
-    st.markdown("### 🔮 Synaptic Anchors (Raw Hebbian Thought)")
-    st.code(synaptic_anchors, language=None)
+    st.markdown("### 🔮 Synaptic Resonance")
     
-    st.markdown("### 💡 Hybrid Articulation (Gemma-3 Interpretation)")
-    st.success(articulated_response)
+    # Clean up anchors for display (remove gibberish, keep meaningful characters)
+    clean_display_anchors = "".join([c for c in synaptic_anchors if c.isprintable() and not c.isspace()])
+    
+    with st.container():
+        st.markdown(f"""
+        <div class="brain-card" style="text-align: center;">
+            <h4 style="color: #b8864b; margin-top: 0; font-family: 'Inter', sans-serif;">🧬 RAW SYNAPTIC RESONANCE</h4>
+            <div class="glow-text">
+                {clean_display_anchors if clean_display_anchors else "EMBRYONIC SILENCE"}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if articulated_response:
+            with st.chat_message("assistant", avatar="🧠"):
+                st.markdown(articulated_response)
+        else:
+            st.info("🌑 **Cerebral Bridge Offline**: Gemma-3 is not connected. The above anchors represent the raw, un-articulated biological impulses of the organism.")
+            st.caption("Add your GEMINI_API_KEY to secrets to translate these signals.")
 
 # --- CONVERSATION HISTORY ---
 if st.session_state.conversation_history:
-    with st.expander("📜 Conversation History", expanded=False):
+    with st.expander("📜 Synaptic History", expanded=False):
         for i, conv in enumerate(reversed(st.session_state.conversation_history[-10:])):
-            st.markdown(f"**[{conv['timestamp']}] You:** {conv['query']}")
-            st.markdown(f"**Organism:** {conv['response'][:200]}...")
+            with st.chat_message("user", avatar="👤"):
+                st.markdown(f"**{conv['query']}**")
+                st.caption(f"Time: {conv['timestamp']}")
+            
+            with st.chat_message("assistant", avatar="🧠"):
+                st.markdown(conv['response'])
             st.divider()
 
 st.divider()
