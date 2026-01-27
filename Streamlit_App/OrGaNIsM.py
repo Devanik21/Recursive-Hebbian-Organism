@@ -407,6 +407,36 @@ def fragment_sidebar_controls():
         refined_bytes = brain.associate(torch.randint(0, 256, (1, 1))) # Pulse
         st.info(f"Refined Synaptic Flow: {refined_bytes.decode('utf-8', errors='ignore')[:30]}...")
 
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        if st.button("🪞 Self-Reflect (Stage 6)"):
+            activation, entropy = brain.reflect()
+            st.info(f"Reflection complete. Entropy: {entropy:.4f}")
+            st.session_state.entropy_history.append(entropy)
+    with col_s2:
+        if st.button("🔬 Scale Dims (Stage 7)"):
+            if brain.synapse.shape[0] < 64:
+                brain.scale_dimensions(64)
+                st.success("Thought resolution: 64!")
+            else:
+                st.warning("Already at max resolution.")
+
+    if st.button("📚 Digest Knowledge Base"):
+        with st.spinner("Crawling project files..."):
+            found_files = []
+            for root, dirs, files in os.walk(base_dir):
+                if any(x in root for x in ["__pycache__", ".git", ".antigravity"]): continue
+                for file in files:
+                    if file.endswith((".py", ".txt", ".md", ".json")) and file not in ["brain_weights.pth", "brain_state.json"]:
+                        found_files.append(os.path.join(root, file))
+            for f_path in found_files:
+                try:
+                    with open(f_path, 'rb') as f:
+                        raw_bytes = f.read()
+                        if raw_bytes: feed_organism(raw_bytes, os.path.basename(f_path))
+                except: continue
+            st.success(f"Consumed {len(found_files)} knowledge nodes.")
+
     st.divider()
     st.markdown("### 🌌 AGI Endgame Controls (Stages 15-21)")
     
