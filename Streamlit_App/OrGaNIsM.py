@@ -319,8 +319,15 @@ def fragment_sidebar_status():
     current_hour = datetime.datetime.now().hour
     state_emoji, state_desc = get_metabolic_state(current_hour)
     st.info(f"**Metabolic State**: {state_emoji}\n\n{state_desc}")
-    st.metric("⚡ Plasticity", f"{brain.plasticity:.4f}")
-    st.metric("📂 Files Digested", st.session_state.files_eaten)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("⚡ Plasticity", f"{brain.plasticity:.4f}")
+    with col2:
+        st.metric("📂 Eaten", st.session_state.files_eaten)
+    
+    # --- STEP 14: Metabolic Balance ---
+    st.progress(brain.metabolic_balance / 2.0, text=f"Metabolic Balance: {brain.metabolic_balance:.2f}x")
 
 @st.fragment
 def fragment_sidebar_feeding():
@@ -435,11 +442,12 @@ def fragment_dialogue():
 def fragment_metrics():
     st.markdown("## 📊 Cognitive Metrics")
     neuron_count = brain.synapse.shape[1]
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("🧠 Neural Mass", f"{neuron_count:,}")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("🧠 Neurons", f"{neuron_count:,}")
     col2.metric("📈 Stability", f"{st.session_state.last_stability:.4f}")
     col3.metric("💾 Buffer", len(brain.experience_buffer))
-    col4.metric("🌐 Bridge", "Online" if bridge.model else "Offline")
+    col4.metric("✨ Curiosity", f"{brain.curiosity_score:.2f}")
+    col5.metric("🌐 Bridge", "Online" if bridge.model else "Offline")
     
     if st.session_state.entropy_history:
         st.line_chart(st.session_state.entropy_history, use_container_width=True)
@@ -497,6 +505,28 @@ def fragment_history_gallery():
                 for dream in reversed(st.session_state.dream_history):
                     st.code(dream["content"][:100], language=None)
                     st.caption(f"⏰ {dream['timestamp']} | Entropy: {dream['entropy']:.4f}")
+
+# ============================================================
+# STEP 15: AUTONOMOUS RUMINATOR
+# ============================================================
+@st.fragment(run_every=10) # Ruminate every 10 seconds
+def fragment_autonomous_ruminator():
+    # Only ruminate if metabolic cycle allows (Active or Neutral)
+    current_hour = datetime.datetime.now().hour
+    if current_hour >= 5:
+        # Subtle weight shift
+        brain.reflect()
+        # Occasional subconscious dream
+        if time.time() % 60 < 10: # 10s chance every minute
+            dream = trigger_dream()
+            _, e = brain.reflect()
+            st.session_state.dream_history.append({
+                "content": "[Auto] " + dream,
+                "entropy": e,
+                "timestamp": datetime.datetime.now().strftime("%H:%M:%S")
+            })
+            if len(st.session_state.dream_history) > 10:
+                st.session_state.dream_history.pop(0)
 # ============================================================
 # APP LAYOUT (Fragment Orchestration)
 # ============================================================
@@ -526,14 +556,18 @@ fragment_memory_viz()
 st.divider()
 fragment_knowledge_injection()
 
+# Invisible Ruminator
+fragment_autonomous_ruminator()
+
 # Static Expanders
 with st.expander("📚 Hyper-Intelligence Features", expanded=False):
     st.markdown("""
     ### 🧬 The 10 Stages of Ascension
     1. **Neural Mitosis** 🧬 | 2. **Consolidation** 🔄 | 3. **Generative Replay** 🌌
-    4. **Multi-Scale Memory** 💾 | 5. **Dynamic Plasticity** ⚡ | 6. **Self-Reflection** 🪞
+    3. **Generative Replay** 🌌 | 4. **Multi-Scale Memory** 💾 | 5. **Dynamic Plasticity** ⚡ | 6. **Self-Reflection** 🪞
     7. **Dim Scaling** 🔬 | 8. **Recursive Refinement** 🔮 | 9. **Metabolic Rhythms** 🌙
-    10. **Hybrid Articulation** 🌐
+    10. **Hybrid Articulation** 🌐 | 11. **Active Inference** ⚖️ | 12. **Homeostatic Scaling** 🌊 | 13. **Temporal Awareness** ⚡
+    14. **Autonomous Rumination** 🌀
     """)
 
 # ============================================================
