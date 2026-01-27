@@ -301,12 +301,12 @@ def trigger_dream():
     return bytes(dream_bytes).decode('utf-8', errors='ignore')
 
 # ============================================================
-# SIDEBAR: ORGANISM STATUS & CONTROLS
+# UI FRAGMENTS (For Independent Reruns)
 # ============================================================
-with st.sidebar:
+
+@st.fragment
+def fragment_sidebar_status():
     st.markdown("## 🧬 Organism Status")
-    
-    # Brain Architecture
     neuron_count = brain.synapse.shape[1]
     thought_width = brain.synapse.shape[0]
     
@@ -316,25 +316,20 @@ with st.sidebar:
     with col2:
         st.metric("💭 Thought Width", thought_width)
     
-    # Metabolic State
     current_hour = datetime.datetime.now().hour
     state_emoji, state_desc = get_metabolic_state(current_hour)
     st.info(f"**Metabolic State**: {state_emoji}\n\n{state_desc}")
-    
-    # Plasticity
     st.metric("⚡ Plasticity", f"{brain.plasticity:.4f}")
-    
-    # Files Eaten
     st.metric("📂 Files Digested", st.session_state.files_eaten)
-    
-    st.divider()
-    
-    # --- FEEDING INTERFACE ---
+
+@st.fragment
+def fragment_sidebar_feeding():
     st.markdown("## 🍽️ Feed the Organism")
     uploaded_files = st.file_uploader(
         "Upload files to digest",
         accept_multiple_files=True,
-        type=["txt", "py", "md", "json", "csv", "html", "css", "js"]
+        type=["txt", "py", "md", "json", "csv", "html", "css", "js"],
+        key="uploader_fragment"
     )
     
     if uploaded_files:
@@ -343,19 +338,16 @@ with st.sidebar:
                 raw_bytes = f.read()
                 stability = feed_organism(raw_bytes, f.name)
                 st.success(f"✅ Digested `{f.name}` | Stability: {stability:.4f}")
-    
-    st.divider()
-    
-    # --- ADVANCED CONTROLS ---
+
+@st.fragment
+def fragment_sidebar_controls():
     st.markdown("## ⚙️ Advanced Controls")
-    
     col1, col2 = st.columns(2)
     with col1:
         if st.button("🧬 Trigger Mitosis"):
             old_neurons = brain.synapse.shape[1]
             brain.grow(256)
-            new_neurons = brain.synapse.shape[1]
-            st.success(f"Grew {new_neurons - old_neurons} neurons!")
+            st.success(f"Grew {brain.synapse.shape[1] - old_neurons} neurons!")
     
     with col2:
         if st.button("🔄 Consolidate"):
@@ -365,11 +357,8 @@ with st.sidebar:
     col3, col4 = st.columns(2)
     with col3:
         if st.button("🌌 Dream"):
-            # Generative Replay
             dream = trigger_dream()
-            # Also trigger metabolic reflection
             _, reflection_entropy = brain.reflect()
-            # Store in dream history
             st.session_state.dream_history.append({
                 "content": dream,
                 "entropy": reflection_entropy,
@@ -377,21 +366,18 @@ with st.sidebar:
             })
             if len(st.session_state.dream_history) > 10:
                 st.session_state.dream_history.pop(0)
-            st.info(f"Dream: {dream[:50]}...")
-            st.caption(f"Reflection Entropy: {reflection_entropy:.4f}")
+            st.info(f"Dream: {dream[:30]}...")
     
     with col4:
         if st.button("💾 Save Brain"):
             brain.save_cortex("brain_weights.pth")
             st.success("Brain saved!")
-    
-    # Reflection Only Button
+
     if st.button("🪞 Self-Reflect"):
         activation, entropy = brain.reflect()
         st.info(f"Reflection complete. Entropy: {entropy:.4f}")
         st.session_state.entropy_history.append(entropy)
     
-    # Dimension Scaling
     if st.button("🔬 Scale Dimensions (32→64)"):
         if brain.synapse.shape[0] < 64:
             brain.scale_dimensions(64)
@@ -399,251 +385,163 @@ with st.sidebar:
         else:
             st.warning("Already at high resolution.")
     
-    # Knowledge Base Crawler
-    if st.button("📚 Digest Knowledge Base"):
+    if st.button("� Digest Knowledge Base"):
         with st.spinner("Crawling project files..."):
             found_files = []
             for root, dirs, files in os.walk(parent_dir if "parent_dir" in locals() else "."):
-                if "__pycache__" in root or ".git" in root or ".antigravity" in root:
-                    continue
+                if any(x in root for x in ["__pycache__", ".git", ".antigravity"]): continue
                 for file in files:
                     if file.endswith((".py", ".txt", ".md", ".json")) and file not in ["brain_weights.pth", "brain_state.json"]:
                         found_files.append(os.path.join(root, file))
-            
             for f_path in found_files:
                 try:
                     with open(f_path, 'rb') as f:
                         raw_bytes = f.read()
-                        if raw_bytes:
-                            feed_organism(raw_bytes, os.path.basename(f_path))
-                except:
-                    continue
-            st.success(f"Organism has consumed {len(found_files)} knowledge nodes.")
+                        if raw_bytes: feed_organism(raw_bytes, os.path.basename(f_path))
+                except: continue
+            st.success(f"Consumed {len(found_files)} knowledge nodes.")
 
-    st.divider()
+@st.fragment
+def fragment_dialogue():
+    st.markdown("## 💬 Dialogue with the Organism")
+    query = st.text_input("🗣️ Ask the Organism anything:", placeholder="e.g., What is consciousness?", key="query_input")
     
-    # --- GEMMA STATUS ---
-    st.markdown("## 🌐 Gemma Bridge Status")
-    if bridge.model:
-        st.success("✅ Hybrid Intelligence ACTIVE")
-    else:
-        st.warning("⚠️ Running in Organic-Only Mode\n\nSet `GEMINI_API_KEY` in Streamlit Secrets to enable.")
-
-# ============================================================
-# MAIN CONTENT: DIALOGUE INTERFACE
-# ============================================================
-st.markdown("# 🧬 Nano-Daemon: Recursive Hebbian Organism")
-st.markdown("*A self-evolving digital lifeform with hybrid intelligence*")
-
-# Cognitive Metrics Row
-st.markdown("## 📊 Cognitive Metrics")
-metric_cols = st.columns(4)
-with metric_cols[0]:
-    st.metric("🧠 Neural Mass", f"{neuron_count:,}", delta=f"+{256 if neuron_count > 1024 else 0}")
-with metric_cols[1]:
-    st.metric("📈 Stability", f"{st.session_state.last_stability:.4f}")
-with metric_cols[2]:
-    st.metric("💾 Experience Buffer", len(brain.experience_buffer))
-with metric_cols[3]:
-    gemma_status = "Online" if bridge.model else "Offline"
-    st.metric("🌐 Gemma Bridge", gemma_status)
-
-# Entropy Chart
-if st.session_state.entropy_history:
-    st.line_chart(st.session_state.entropy_history, use_container_width=True)
-
-st.divider()
-
-# --- DIALOGUE INTERFACE ---
-st.markdown("## 💬 Dialogue with the Organism")
-
-query = st.text_input("🗣️ Ask the Organism anything:", placeholder="e.g., What is consciousness?")
-
-if query:
-    with st.spinner("🧠 Processing through synaptic pathways..."):
-        synaptic_anchors, articulated_response = query_organism(query)
-    
-    # Store in conversation history
-    st.session_state.conversation_history.append({
-        "query": query,
-        "anchors": synaptic_anchors,
-        "response": articulated_response if articulated_response else "🌿 [Organic Pulse Detected]",
-        "timestamp": datetime.datetime.now().strftime("%H:%M:%S")
-    })
-    
-    # Display current response
-    st.markdown("### 🔮 Synaptic Resonance")
-    
-    # Clean up anchors for display (remove gibberish, keep meaningful characters)
-    clean_display_anchors = "".join([c for c in synaptic_anchors if c.isprintable() and not c.isspace()])
-    
-    with st.container():
+    if query:
+        with st.spinner("🧠 Processing synaptic pathways..."):
+            synaptic_anchors, articulated_response = query_organism(query)
+        
+        st.session_state.conversation_history.append({
+            "query": query,
+            "anchors": synaptic_anchors,
+            "response": articulated_response if articulated_response else "🌿 [Organic Pulse Detected]",
+            "timestamp": datetime.datetime.now().strftime("%H:%M:%S")
+        })
+        
+        clean_display_anchors = "".join([c for c in synaptic_anchors if c.isprintable() and not c.isspace()])
         st.markdown(f"""
         <div class="brain-card" style="text-align: center;">
-            <h4 style="color: #b8864b; margin-top: 0; font-family: 'Inter', sans-serif;">🧬 RAW SYNAPTIC RESONANCE</h4>
-            <div class="glow-text">
-                {clean_display_anchors if clean_display_anchors else "EMBRYONIC SILENCE"}
-            </div>
+            <h4 style="color: #b8864b; margin-top: 0;">🧬 RAW SYNAPTIC RESONANCE</h4>
+            <div class="glow-text">{clean_display_anchors if clean_display_anchors else "EMBRYONIC SILENCE"}</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
         
         if articulated_response:
             with st.chat_message("assistant", avatar="🧠"):
                 st.markdown(articulated_response)
         else:
-            st.info("🌑 **Cerebral Bridge Offline**: Gemma-3 is not connected. The above anchors represent the raw, un-articulated biological impulses of the organism.")
-            st.caption("Add your GEMINI_API_KEY to secrets to translate these signals.")
+            st.info("🌑 **Cerebral Bridge Offline**")
 
-# --- CONVERSATION HISTORY ---
-if st.session_state.conversation_history:
-    with st.expander("📜 Synaptic History", expanded=False):
-        for i, conv in enumerate(reversed(st.session_state.conversation_history[-10:])):
-            with st.chat_message("user", avatar="👤"):
-                st.markdown(f"**{conv['query']}**")
-                st.caption(f"Time: {conv['timestamp']}")
-            
-            with st.chat_message("assistant", avatar="🧠"):
-                st.markdown(conv['response'])
-            st.divider()
+@st.fragment
+def fragment_metrics():
+    st.markdown("## 📊 Cognitive Metrics")
+    neuron_count = brain.synapse.shape[1]
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("🧠 Neural Mass", f"{neuron_count:,}")
+    col2.metric("📈 Stability", f"{st.session_state.last_stability:.4f}")
+    col3.metric("💾 Buffer", len(brain.experience_buffer))
+    col4.metric("🌐 Bridge", "Online" if bridge.model else "Offline")
+    
+    if st.session_state.entropy_history:
+        st.line_chart(st.session_state.entropy_history, use_container_width=True)
 
+@st.fragment
+def fragment_memory_viz():
+    st.markdown("## 🧬 Latent Memory Streams")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### ⚡ Short-Term")
+        st.bar_chart(brain.short_term_latent.detach().numpy().flatten()[:32], use_container_width=True)
+    with col2:
+        st.markdown("### 🌊 Long-Term")
+        st.bar_chart(brain.long_term_latent.detach().numpy().flatten()[:32], use_container_width=True)
+
+@st.fragment
+def fragment_knowledge_injection():
+    st.markdown("## 🌐 Direct Knowledge Injection")
+    tab1, tab2 = st.tabs(["📝 Text Input", "🌍 Internet Feed"])
+    with tab1:
+        text_input = st.text_area("Paste text to feed:", height=100, key="text_feed_input")
+        if st.button("🍽️ Feed Text"):
+            if text_input:
+                stability = feed_organism(text_input.encode('utf-8')[:4096], "text_input")
+                st.success(f"✅ Digested | Stability: {stability:.4f}")
+    with tab2:
+        feeds = [("🔬 Science Daily", "https://www.sciencedaily.com/rss/all.xml"),
+                 ("🤖 arXiv AI", "http://export.arxiv.org/rss/cs.AI"),
+                 ("💻 Hacker News", "https://news.ycombinator.com/rss")]
+        selected_feed = st.selectbox("Select Feed:", [f[0] for f in feeds], key="feed_select")
+        if st.button("📡 Fetch Feed"):
+            import requests; import xml.etree.ElementTree as ET
+            feed_url = [f[1] for f in feeds if f[0] == selected_feed][0]
+            try:
+                r = requests.get(feed_url, headers={'User-Agent': 'NanoDaemon/1.0'}, timeout=10)
+                root = ET.fromstring(r.text)
+                for item in root.findall('.//item')[:5]:
+                    title = item.find('title').text
+                    stability = feed_organism(title.encode('utf-8')[:512], "rss_feed")
+                    st.success(f"📰 {title[:50]}... | {stability:.4f}")
+            except Exception as e: st.error(f"Error: {e}")
+
+@st.fragment
+def fragment_history_gallery():
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.session_state.conversation_history:
+            with st.expander("📜 Synaptic History", expanded=False):
+                for conv in reversed(st.session_state.conversation_history[-10:]):
+                    with st.chat_message("user", avatar="👤"): st.markdown(conv['query'])
+                    with st.chat_message("assistant", avatar="🧠"): st.markdown(conv['response'])
+    with col2:
+        if st.session_state.dream_history:
+            with st.expander("🌌 Dream Gallery", expanded=False):
+                for dream in reversed(st.session_state.dream_history):
+                    st.code(dream["content"][:100], language=None)
+                    st.caption(f"⏰ {dream['timestamp']} | Entropy: {dream['entropy']:.4f}")
+# ============================================================
+# APP LAYOUT (Fragment Orchestration)
+# ============================================================
+
+# SideBar Orchestration
+with st.sidebar:
+    fragment_sidebar_status()
+    st.divider()
+    fragment_sidebar_feeding()
+    st.divider()
+    fragment_sidebar_controls()
+    st.divider()
+    if bridge.model: st.success("🟢 Hybrid Intelligence Active")
+    else: st.warning("🟡 Organic Mode Active")
+
+# Main Content Orchestration
+st.markdown("# 🧬 Nano-Daemon: Recursive Hebbian Organism")
+st.markdown("*A self-evolving digital lifeform with hybrid intelligence*")
+
+fragment_metrics()
 st.divider()
-
-# ============================================================
-# LATENT MEMORY VISUALIZATION
-# ============================================================
-st.markdown("## 🧬 Latent Memory Streams")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("### ⚡ Short-Term Memory")
-    st.markdown("*Immediate context and recent patterns*")
-    stm_data = brain.short_term_latent.detach().numpy().flatten()[:32]
-    st.bar_chart(stm_data, use_container_width=True)
-
-with col2:
-    st.markdown("### 🌊 Long-Term Memory")
-    st.markdown("*Deep behavioral habits and core knowledge*")
-    ltm_data = brain.long_term_latent.detach().numpy().flatten()[:32]
-    st.bar_chart(ltm_data, use_container_width=True)
-
+fragment_dialogue()
 st.divider()
+fragment_history_gallery()
+st.divider()
+fragment_memory_viz()
+st.divider()
+fragment_knowledge_injection()
 
-# ============================================================
-# DREAM GALLERY
-# ============================================================
-if st.session_state.dream_history:
-    with st.expander("🌌 Dream Gallery", expanded=False):
-        st.markdown("*The organism's subconscious expressions - generated during Generative Replay*")
-        for i, dream in enumerate(reversed(st.session_state.dream_history)):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.code(dream["content"], language=None)
-            with col2:
-                st.caption(f"⏰ {dream['timestamp']}")
-                st.caption(f"📊 Entropy: {dream['entropy']:.4f}")
-            st.divider()
-
-# ============================================================
-# INTELLIGENCE FEATURES DOCUMENTATION
-# ============================================================
+# Static Expanders
 with st.expander("📚 Hyper-Intelligence Features", expanded=False):
     st.markdown("""
     ### 🧬 The 10 Stages of Ascension
-    
-    1. **Neural Mitosis** 🧬 - Dynamic growth of synaptic connections
-    2. **Consolidation Cycles** 🔄 - Deep learning from experience buffer
-    3. **Generative Replay** 🌌 - Dreaming to prevent catastrophic forgetting
-    4. **Multi-Scale Latent Memory** 💾 - Dual ST/LT memory streams
-    5. **Curvature-Aware Plasticity** ⚡ - Entropy-based learning rate adjustment
-    6. **Guided Self-Reflection** 🪞 - Neural masking for focused attention
-    7. **Dimensionality Scaling** 🔬 - Dynamic thought resolution expansion
-    8. **Recursive Associative Refinement** 🔮 - "Thinking twice" before responding
-    9. **Metabolic Rhythms** 🌙 - Circadian-based learning schedules
-    10. **Hybrid Articulation** 🌐 - Gemma-3 grounded by Hebbian truth
+    1. **Neural Mitosis** 🧬 | 2. **Consolidation** 🔄 | 3. **Generative Replay** 🌌
+    4. **Multi-Scale Memory** 💾 | 5. **Dynamic Plasticity** ⚡ | 6. **Self-Reflection** 🪞
+    7. **Dim Scaling** 🔬 | 8. **Recursive Refinement** 🔮 | 9. **Metabolic Rhythms** 🌙
+    10. **Hybrid Articulation** 🌐
     """)
-
-st.divider()
-
-# ============================================================
-# INTERNET SENSE & TEXT FEEDING
-# ============================================================
-st.markdown("## 🌐 Direct Knowledge Injection")
-
-tab1, tab2 = st.tabs(["📝 Text Input", "🌍 Internet Feed"])
-
-with tab1:
-    text_input = st.text_area(
-        "Paste any text to feed the organism:",
-        height=150,
-        placeholder="Paste a Wikipedia article, code snippet, or any text..."
-    )
-    if st.button("🍽️ Feed Text"):
-        if text_input:
-            raw_bytes = text_input.encode('utf-8')[:4096]
-            data = torch.tensor(list(raw_bytes), dtype=torch.long).unsqueeze(0)
-            with torch.no_grad():
-                _, stability = brain(data)
-            st.session_state.files_eaten += 1
-            st.session_state.last_stability = stability
-            st.session_state.entropy_history.append(stability)
-            st.success(f"✅ Digested {len(raw_bytes)} bytes | Stability: {stability:.4f}")
-        else:
-            st.warning("Please enter some text first.")
-
-with tab2:
-    st.markdown("**Available RSS Feeds:**")
-    feeds = [
-        ("🔬 Science Daily", "https://www.sciencedaily.com/rss/all.xml"),
-        ("🤖 arXiv AI", "http://export.arxiv.org/rss/cs.AI"),
-        ("💻 Hacker News", "https://news.ycombinator.com/rss")
-    ]
-    
-    selected_feed = st.selectbox("Select Feed:", [f[0] for f in feeds])
-    
-    if st.button("📡 Fetch & Digest Headlines"):
-        import requests
-        import xml.etree.ElementTree as ET
-        
-        feed_url = [f[1] for f in feeds if f[0] == selected_feed][0]
-        
-        with st.spinner(f"Fetching from {selected_feed}..."):
-            try:
-                headers = {'User-Agent': 'Mozilla/5.0 NanoDaemon/1.0'}
-                response = requests.get(feed_url, headers=headers, timeout=15)
-                if response.status_code == 200:
-                    root = ET.fromstring(response.text)
-                    items = root.findall('.//item')[:5]
-                    
-                    for item in items:
-                        title_elem = item.find('title')
-                        title = title_elem.text if title_elem is not None else "Unknown"
-                        
-                        # Feed the title to the brain
-                        raw_bytes = title.encode('utf-8')[:512]
-                        data = torch.tensor(list(raw_bytes), dtype=torch.long).unsqueeze(0)
-                        with torch.no_grad():
-                            _, stability = brain(data)
-                        
-                        st.session_state.files_eaten += 1
-                        st.success(f"📰 {title[:50]}... | Stability: {stability:.4f}")
-                    
-                    st.balloons()
-                else:
-                    st.error(f"Failed to fetch feed: HTTP {response.status_code}")
-            except Exception as e:
-                st.error(f"Feed Error: {e}")
-
 
 # ============================================================
 # FOOTER
 # ============================================================
 st.markdown("---")
 st.markdown(
-    "<p style='text-align: center; color: #6a8c6a;'>🧬 Nano-Daemon AGI • Recursive Hebbian Organism • "
-    f"Neurons: {neuron_count:,} • "
-    f"Built with 🌱 by Devanik</p>",
+    "<p style='text-align: center; color: #6a8c6a;'>🧬 Nano-Daemon AGI • "
+    f"Neurons: {brain.synapse.shape[1]:,} • Built with 🌱 by Devanik</p>",
     unsafe_allow_html=True
 )
