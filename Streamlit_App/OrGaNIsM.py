@@ -23,83 +23,95 @@ from core import PlasticCortex
 # --- CUSTOM CSS FOR A PREMIUM DARK THEME ---
 st.markdown("""
 <style>
-    /* Main background */
+    /* Main background - The 'Root' of the Earth */
     .stApp {
-        background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #16213e 100%);
+        background: linear-gradient(180deg, #0d110d 0%, #171d17 100%);
+        color: #e0e4de;
     }
     
-    /* Headers */
+    /* Headers - Organic growth colors */
     h1, h2, h3 {
-        background: linear-gradient(90deg, #00d4ff, #7b2cbf, #e040fb);
+        background: linear-gradient(90deg, #7cad8a, #b8864b, #8a9b68);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-weight: 800;
+        font-weight: 700;
+        letter-spacing: -0.5px;
     }
     
-    /* Metric cards */
+    /* Metric cards - Mineral tones */
     [data-testid="stMetricValue"] {
-        font-size: 2.5rem;
-        color: #00d4ff;
-        text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        font-size: 2.8rem;
+        color: #8fb399;
+        text-shadow: 0 0 15px rgba(143, 179, 153, 0.2);
     }
     
     [data-testid="stMetricLabel"] {
-        color: #a0a0c0;
+        color: #b0bab1;
+        font-family: 'Inter', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
-    /* Sidebar styling */
+    /* Sidebar styling - Deep Soil */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
-        border-right: 1px solid #7b2cbf;
+        background: #0f140f;
+        border-right: 1px solid #2d382d;
     }
     
-    /* Expander styling */
+    /* Expander styling - Soft Bark */
     .streamlit-expanderHeader {
-        background: rgba(123, 44, 191, 0.2);
-        border-radius: 10px;
+        background: rgba(45, 56, 45, 0.4);
+        border: 1px solid #3d4a3d;
+        border-radius: 12px;
+        color: #e0e4de !important;
     }
     
-    /* Text input */
+    /* Text input - Cave shadow */
     .stTextInput > div > div > input {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid #7b2cbf;
-        color: #ffffff;
+        background: #151a15;
+        border: 1px solid #3d4a3d;
+        color: #e0e4de;
+        border-radius: 8px;
     }
     
-    /* Buttons */
+    /* Buttons - Terracotta to Sage */
     .stButton > button {
-        background: linear-gradient(90deg, #7b2cbf, #e040fb);
-        color: white;
+        background: linear-gradient(135deg, #a67c52, #6a8c6a);
+        color: #ffffff;
         border: none;
-        border-radius: 20px;
-        padding: 0.5rem 2rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
+        border-radius: 12px;
+        padding: 0.6rem 2.2rem;
+        font-weight: 500;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     
     .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(224, 64, 251, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        border-color: #8fb399;
     }
     
-    /* Success/Info boxes */
+    /* Progress bars and success boxes - Fresh Moss */
     .stSuccess, .stInfo {
-        background: rgba(0, 212, 255, 0.1);
-        border-left: 4px solid #00d4ff;
+        background: rgba(45, 56, 45, 0.6);
+        border-left: 5px solid #6a8c6a;
+        color: #e0e4de;
+        border-radius: 8px;
     }
     
-    /* Organic glow animation */
+    /* Organic pulse animation - Bio-luminescence */
     @keyframes pulse {
-        0% { box-shadow: 0 0 5px rgba(123, 44, 191, 0.5); }
-        50% { box-shadow: 0 0 20px rgba(224, 64, 251, 0.8); }
-        100% { box-shadow: 0 0 5px rgba(123, 44, 191, 0.5); }
+        0% { box-shadow: 0 0 8px rgba(143, 179, 153, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(143, 179, 153, 0.5); }
+        100% { box-shadow: 0 0 8px rgba(143, 179, 153, 0.3); }
     }
     
     .brain-card {
-        animation: pulse 2s infinite;
-        padding: 1rem;
-        border-radius: 15px;
-        background: rgba(26, 26, 46, 0.8);
+        animation: pulse 4s infinite ease-in-out;
+        padding: 1.5rem;
+        border-radius: 20px;
+        background: rgba(23, 29, 23, 0.9);
+        border: 1px solid #2d382d;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -573,8 +585,8 @@ with tab2:
 # ============================================================
 st.markdown("---")
 st.markdown(
-    "<p style='text-align: center; color: #7b2cbf;'>🧬 Nano-Daemon AGI • Recursive Hebbian Organism • "
+    "<p style='text-align: center; color: #6a8c6a;'>🧬 Nano-Daemon AGI • Recursive Hebbian Organism • "
     f"Neurons: {neuron_count:,} • "
-    f"Built with 💜 by Devanik</p>",
+    f"Built with 🌱 by Devanik</p>",
     unsafe_allow_html=True
 )
