@@ -1,15 +1,22 @@
+import os
+import sys
+
+# --- CRITICAL: Add root to path BEFORE any other imports ---
+# This allows the app to find core.py even if it's in a subfolder like /Streamlit_App/
+base_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(base_dir)
+if os.path.exists(os.path.join(base_dir, "core.py")):
+    sys.path.append(base_dir)
+elif os.path.exists(os.path.join(parent_dir, "core.py")):
+    sys.path.append(parent_dir)
+
 import streamlit as st
 import torch
 import time
 import datetime
 import io
 
-import sys
-import os
-# Add the parent directory to the path so it can find core.py
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# --- PAGE CONFIG (Must be first Streamlit command) ---
+# --- PAGE CONFIG (Must be first Streamlit command for Streamlit UI) ---
 st.set_page_config(
     page_title="🧬 Nano-Daemon AGI",
     page_icon="🧠",
@@ -385,6 +392,27 @@ with st.sidebar:
         else:
             st.warning("Already at high resolution.")
     
+    # Knowledge Base Crawler
+    if st.button("📚 Digest Knowledge Base"):
+        with st.spinner("Crawling project files..."):
+            found_files = []
+            for root, dirs, files in os.walk(parent_dir if "parent_dir" in locals() else "."):
+                if "__pycache__" in root or ".git" in root or ".antigravity" in root:
+                    continue
+                for file in files:
+                    if file.endswith((".py", ".txt", ".md", ".json")) and file not in ["brain_weights.pth", "brain_state.json"]:
+                        found_files.append(os.path.join(root, file))
+            
+            for f_path in found_files:
+                try:
+                    with open(f_path, 'rb') as f:
+                        raw_bytes = f.read()
+                        if raw_bytes:
+                            feed_organism(raw_bytes, os.path.basename(f_path))
+                except:
+                    continue
+            st.success(f"Organism has consumed {len(found_files)} knowledge nodes.")
+
     st.divider()
     
     # --- GEMMA STATUS ---
