@@ -35,6 +35,35 @@ class PlasticCortex(nn.Module):
         # --- STEP 13: Temporal Awareness (DHL) ---
         self.signal_history = []
 
+        # --- STEP 15: World Modeling (Predictive Reality Engine) ---
+        self.world_model_history = []  # Stores (signal, next_signal) pairs
+        self.world_model_prediction = None
+        self.prediction_error = 0.0
+
+        # --- STEP 16: Metacognition (Thinking About Thinking) ---
+        self.metacognition_confidence = 1.0  # High = confident, Low = uncertain
+        
+        # --- STEP 17: Theory of Mind (Self vs Other) ---
+        self.register_buffer("self_latent", torch.zeros(1, 32))
+        self.register_buffer("other_latent", torch.zeros(1, 32))
+        self.processing_other = False  # Flag for "other" perspective
+
+        # --- STEP 18: Intrinsic Motivation (Novelty Drive) ---
+        self.motivation_state = "NEUTRAL"  # BORED, NEUTRAL, ENGAGED, OVERWHELMED
+        self.boredom_counter = 0
+        self.overwhelm_counter = 0
+        
+        # --- STEP 19: Causal Inference Substrate ---
+        self.causal_graph = {}  # {signal_hash: {next_hash: count}}
+
+        # --- STEP 20: Sleep-Wake Consolidation ---
+        self.is_sleeping = False
+        self.pruning_threshold = 0.01  # Synapses below this are pruned
+
+        # --- STEP 21: Edge-of-Chaos Criticality ---
+        self.criticality_score = 0.5  # 0=frozen, 1=chaotic, 0.5=edge
+        self.lyapunov_history = []
+
     def grow(self, new_neurons=128):
         """Neural Mitosis: Physically grows the brain's synaptic capacity."""
         print(f"🧬 MITOTIC EVENT: Growing cortex by {new_neurons} neurons...")
@@ -207,6 +236,70 @@ class PlasticCortex(nn.Module):
                     self.metabolic_balance *= 1.01 # Restore sensitivity
                 self.metabolic_balance = max(0.1, min(2.0, self.metabolic_balance))
 
+                # --- STEP 15: World Modeling (Update Prediction Error) ---
+                if self.world_model_prediction is not None:
+                    self.prediction_error = torch.norm(curr_signal - self.world_model_prediction).item()
+                self.world_model_prediction = signal.mean(dim=0, keepdim=True).detach()
+                
+                # Store for causal inference (limit history)
+                if len(self.world_model_history) >= 100:
+                    self.world_model_history.pop(0)
+                self.world_model_history.append(signal.mean(dim=0, keepdim=True).detach())
+
+                # --- STEP 16: Metacognition (Confidence from Prediction Error) ---
+                # High prediction error = low confidence
+                self.metacognition_confidence = max(0.0, 1.0 - (self.prediction_error * 2.0))
+
+                # --- STEP 18: Intrinsic Motivation ---
+                if self.prediction_error < 0.05:
+                    self.boredom_counter += 1
+                    self.overwhelm_counter = max(0, self.overwhelm_counter - 1)
+                elif self.prediction_error > 0.5:
+                    self.overwhelm_counter += 1
+                    self.boredom_counter = max(0, self.boredom_counter - 1)
+                else:
+                    self.boredom_counter = max(0, self.boredom_counter - 1)
+                    self.overwhelm_counter = max(0, self.overwhelm_counter - 1)
+                
+                if self.boredom_counter > 50:
+                    self.motivation_state = "BORED"
+                elif self.overwhelm_counter > 30:
+                    self.motivation_state = "OVERWHELMED"
+                elif self.prediction_error > 0.1 and self.prediction_error < 0.5:
+                    self.motivation_state = "ENGAGED"
+                else:
+                    self.motivation_state = "NEUTRAL"
+
+                # --- STEP 19: Causal Inference (Build Causal Graph) ---
+                if len(self.signal_history) >= 2:
+                    prev_sig = self.signal_history[-2]
+                    curr_sig = self.signal_history[-1]
+                    # Hash signals for graph keys (simplified)
+                    prev_hash = int(prev_sig.sum().item() * 1000) % 10000
+                    curr_hash = int(curr_sig.sum().item() * 1000) % 10000
+                    if prev_hash not in self.causal_graph:
+                        self.causal_graph[prev_hash] = {}
+                    self.causal_graph[prev_hash][curr_hash] = self.causal_graph[prev_hash].get(curr_hash, 0) + 1
+                    # Limit graph size
+                    if len(self.causal_graph) > 500:
+                        oldest_key = list(self.causal_graph.keys())[0]
+                        del self.causal_graph[oldest_key]
+
+                # --- STEP 21: Edge-of-Chaos Criticality ---
+                # Compute Lyapunov-like divergence measure
+                if len(self.lyapunov_history) > 0:
+                    divergence = abs(entropy - self.lyapunov_history[-1])
+                    self.criticality_score = 0.95 * self.criticality_score + 0.05 * min(1.0, divergence * 10)
+                self.lyapunov_history.append(entropy)
+                if len(self.lyapunov_history) > 20:
+                    self.lyapunov_history.pop(0)
+                
+                # Self-tune plasticity to stay at edge of chaos
+                if self.criticality_score < 0.3:  # Too stable/frozen
+                    self.plasticity = min(0.02, self.plasticity * 1.05)
+                elif self.criticality_score > 0.7:  # Too chaotic
+                    self.plasticity = max(0.001, self.plasticity * 0.95)
+
             last_activation = activation
 
         # Store for consolidation (the whole stream)
@@ -270,3 +363,80 @@ class PlasticCortex(nn.Module):
             scores = torch.matmul(refined_signal, all_embeds.t())
             top_indices = torch.topk(scores, k=64).indices[0] # Richer vocabulary for the LLM
             return bytes(top_indices.tolist())
+
+    # ============================================================
+    # STEP 17: Theory of Mind - Perspective Switching
+    # ============================================================
+    def switch_perspective(self, to_other=True):
+        """STEP 17: Toggle between 'Self' and 'Other' perspective for Theory of Mind."""
+        self.processing_other = to_other
+        if to_other:
+            # Save current self state
+            self.self_latent.data = self.short_term_latent.data.clone()
+            # Switch to "Other" latent (may be initialized or learned)
+            self.short_term_latent.data = self.other_latent.data.clone()
+            print("👤 PERSPECTIVE SWITCH: Now processing from 'Other' viewpoint")
+        else:
+            # Save other state
+            self.other_latent.data = self.short_term_latent.data.clone()
+            # Restore self
+            self.short_term_latent.data = self.self_latent.data.clone()
+            print("🧠 PERSPECTIVE SWITCH: Returned to 'Self' viewpoint")
+
+    # ============================================================
+    # STEP 20: Sleep-Wake Deep Consolidation with Pruning
+    # ============================================================
+    def deep_sleep(self):
+        """STEP 20: Deep Sleep Consolidation - Aggressive replay and synaptic pruning."""
+        print("😴 ENTERING DEEP SLEEP MODE...")
+        self.is_sleeping = True
+        
+        # 1. Triple consolidation pass
+        p_bak = self.plasticity
+        self.plasticity *= 3.0
+        for _ in range(3):
+            if self.experience_buffer:
+                for exp in list(self.experience_buffer):
+                    self.forward(exp)
+        self.plasticity = p_bak
+        
+        # 2. Prune weak synapses
+        self.prune_synapses()
+        
+        # 3. Clear buffers
+        self.experience_buffer = []
+        self.world_model_history = self.world_model_history[-10:]  # Keep recent
+        self.causal_graph = {}  # Reset causal graph (fresh start)
+        
+        self.is_sleeping = False
+        print("🌅 WAKING UP: Deep sleep consolidation complete.")
+
+    def prune_synapses(self):
+        """STEP 20: Remove weak synaptic connections (below threshold)."""
+        with torch.no_grad():
+            mask = torch.abs(self.synapse.data) > self.pruning_threshold
+            pruned_count = (~mask).sum().item()
+            self.synapse.data = self.synapse.data * mask.float()
+            # Re-normalize after pruning
+            self.synapse.data = torch.nn.functional.normalize(self.synapse.data, dim=1)
+            print(f"✂️ SYNAPTIC PRUNING: Removed {int(pruned_count)} weak connections")
+
+    # ============================================================
+    # INTROSPECTION METHODS FOR UI
+    # ============================================================
+    def get_agi_status(self):
+        """Returns a dictionary of all AGI feature states for UI display."""
+        return {
+            "neurons": self.synapse.shape[1],
+            "thought_width": self.synapse.shape[0],
+            "plasticity": self.plasticity,
+            "metabolic_balance": self.metabolic_balance,
+            "curiosity": self.curiosity_score,
+            "prediction_error": self.prediction_error,
+            "confidence": self.metacognition_confidence,
+            "motivation": self.motivation_state,
+            "criticality": self.criticality_score,
+            "causal_nodes": len(self.causal_graph),
+            "is_sleeping": self.is_sleeping,
+            "perspective": "Other" if self.processing_other else "Self"
+        }
