@@ -207,7 +207,7 @@ class GemmaBridge:
 # ============================================================
 # SESSION STATE INITIALIZATION
 # ============================================================
-if "brain" not in st.session_state:
+if "brain" not in st.session_state or not hasattr(st.session_state.brain, 'metabolic_balance'):
     st.session_state.brain = PlasticCortex()
     # Try to load saved weights
     if os.path.exists("brain_weights.pth"):
@@ -215,6 +215,9 @@ if "brain" not in st.session_state:
     # Sync metabolism based on current hour
     current_hour = datetime.datetime.now().hour
     st.session_state.brain.sync_metabolism(current_hour)
+    # Reset associated states to match the fresh brain
+    st.session_state.entropy_history = []
+    st.session_state.files_eaten = 0
 
 if "bridge" not in st.session_state:
     st.session_state.bridge = GemmaBridge()
