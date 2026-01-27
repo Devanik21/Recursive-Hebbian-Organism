@@ -1,0 +1,25 @@
+# Security
+.env
+
+# Brain State & Weights
+brain_weights.pth
+brain_state.json
+dream_result.txt
+RESPONSE.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Logs
+*.log
+smart_out.txt
+ascension.log
+startup_check.log
+
+# Workspace
+.vscode/
+.antigravity/
