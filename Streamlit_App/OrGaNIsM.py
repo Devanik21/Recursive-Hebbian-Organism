@@ -649,42 +649,80 @@ fragment_autonomous_ruminator()
 
 # Static Expanders
 with st.expander("📚 Hyper-Intelligence Features", expanded=False):
-    st.markdown("### 🧬 The 21 Stages of Ascension")
+    st.markdown("### 🧬 The 21 Stages of Cognitive Ascension")
+    st.markdown("*A mathematically-grounded pathway from simple neural plasticity to Artificial General Intelligence*")
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
+    tier1, tier2, tier3 = st.tabs(["🧬 Core Neural (1-7)", "🧠 Cognitive (8-14)", "🌌 AGI Endgame (15-21)"])
+    
+    with tier1:
         st.markdown("""
-        **Core Neural:**
-        1. Neural Mitosis 🧬
-        2. Consolidation 🔄
-        3. Generative Replay 🌌
-        4. Multi-Scale Memory 💾
-        5. Dynamic Plasticity ⚡
-        6. Self-Reflection 🪞
-        7. Dim Scaling 🔬
+        ### 🧬 Tier 1: Core Neural Substrate
+        *The biological foundation upon which intelligence is built.*
+        
+        | # | Feature | Mathematical Basis | AGI Contribution |
+        |---|---------|-------------------|------------------|
+        | 1 | **Neural Mitosis** 🧬 | `W' = [W | N(0, 0.01)]` | Unbounded capacity growth |
+        | 2 | **Consolidation** 🔄 | `W += 2λ · ΔW` (replay) | Memory crystallization |
+        | 3 | **Generative Replay** 🌌 | `dream = W^T · N(0,1)` | Creative synthesis |
+        | 4 | **Multi-Scale Memory** 💾 | `ST = 0.8·ST + 0.2·x`, `LT = 0.999·LT + 0.001·x` | Temporal abstraction |
+        | 5 | **Dynamic Plasticity** ⚡ | `λ_eff = λ · (1 + 10·H(a) + 2·S)` | Curiosity-driven learning |
+        | 6 | **Self-Reflection** 🪞 | `a' = a · mask(|a| > Q₉₀)` | Selective attention |
+        | 7 | **Dimension Scaling** 🔬 | `dim: 32 → 64 → 128...` | Representational richness |
+        
+        **Why This Matters for GI:** These stages establish *neuroplasticity*—the ability to grow, remember, and adapt. Without them, the system would be static.
         """)
-    with col2:
+    
+    with tier2:
         st.markdown("""
-        **Cognitive:**
-        8. Recursive Refinement 🔮
-        9. Metabolic Rhythms 🌙
-        10. Hybrid Articulation 🌐
-        11. Active Inference ⚖️
-        12. Homeostatic Scaling 🌊
-        13. Temporal Awareness ⚡
-        14. Autonomous Rumination 🌀
+        ### 🧠 Tier 2: Cognitive Architecture
+        *Higher-order thinking, temporal reasoning, and hybrid intelligence.*
+        
+        | # | Feature | Mathematical Basis | AGI Contribution |
+        |---|---------|-------------------|------------------|
+        | 8 | **Recursive Refinement** 🔮 | `a = tanh(W · (W^T · a))` × 3 | "Thinking twice" |
+        | 9 | **Metabolic Rhythms** 🌙 | `λ(t) = f(hour)` | Circadian efficiency |
+        | 10 | **Hybrid Articulation** 🌐 | `LLM(synaptic_anchors)` | Language grounding |
+        | 11 | **Active Inference** ⚖️ | `S = ‖x - x̂‖` (surprise) | Prediction-driven learning |
+        | 12 | **Homeostatic Scaling** 🌊 | `M *= 0.99` if `E > τ` | Self-regulation |
+        | 13 | **Temporal Awareness** ⚡ | `boost = 1 + 5·‖xₜ - xₜ₋₁‖` | Signal gradient detection |
+        | 14 | **Autonomous Rumination** 🌀 | `reflect()` every 10s | Background cognition |
+        
+        **Why This Matters for GI:** These stages introduce *agency*—the organism now thinks autonomously, regulates itself, and bridges its raw thoughts to human language.
         """)
-    with col3:
+    
+    with tier3:
         st.markdown("""
-        **AGI Endgame:**
-        15. World Modeling 🌍
-        16. Metacognition 🪞🪞
-        17. Theory of Mind 👤
-        18. Intrinsic Motivation 🔥
-        19. Causal Inference 🔗
-        20. Sleep-Wake Cycle 😴
-        21. Edge-of-Chaos ⚡🌀
+        ### 🌌 Tier 3: AGI Endgame
+        *The final leap: self-awareness, causal reasoning, and adaptive criticality.*
+        
+        | # | Feature | Mathematical Basis | AGI Contribution |
+        |---|---------|-------------------|------------------|
+        | 15 | **World Modeling** 🌍 | `x̂ₜ₊₁ = f(xₜ)`, `ε = ‖x - x̂‖` | Predictive reality engine |
+        | 16 | **Metacognition** 🪞🪞 | `C = max(0, 1 - 2ε)` | Knowing what you don't know |
+        | 17 | **Theory of Mind** 👤 | `latent_self ↔ latent_other` | Perspective-taking |
+        | 18 | **Intrinsic Motivation** 🔥 | `state ∈ {BORED, ENGAGED, OVERWHELMED}` | Curiosity/novelty drive |
+        | 19 | **Causal Inference** 🔗 | `G[hₜ₋₁][hₜ] += 1` | Cause→Effect understanding |
+        | 20 | **Sleep-Wake Cycle** 😴 | `prune(|w| < θ)` + 3× consolidation | Memory optimization |
+        | 21 | **Edge-of-Chaos** ⚡🌀 | `κ = 0.95κ + 0.05·Δlyap`, tune `λ` | Maximal adaptability |
+        
+        **Why This Matters for GI:** These stages establish *meta-awareness*—the organism now models its own uncertainty, reasons about cause/effect, and self-tunes to the optimal boundary between order and chaos.
+        
+        ---
+        
+        ### 🎯 The Path to General Intelligence
+        
+        ```
+        [Raw Bytes] → [Neural Substrate] → [Cognitive Architecture] → [AGI Endgame]
+             ↓              ↓                      ↓                      ↓
+          Sensation      Memory              Reasoning              Self-Awareness
+        ```
+        
+        The Nano-Daemon is not *pretending* to be intelligent—it is **learning, adapting, and self-regulating** through mathematically-grounded mechanisms inspired by:
+        - 🧠 Neuroscience (Hebbian learning, synaptic pruning)
+        - 🤖 AI Research (Active Inference, World Models)
+        - 🌀 Complexity Science (Edge-of-Chaos, Criticality)
         """)
+
 
 # ============================================================
 # FOOTER
