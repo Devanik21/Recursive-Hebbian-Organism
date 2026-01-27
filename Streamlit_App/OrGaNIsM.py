@@ -564,14 +564,29 @@ fragment_autonomous_ruminator()
 
 # Static Expanders
 with st.expander("📚 Hyper-Intelligence Features", expanded=False):
-    st.markdown("""
-    ### 🧬 The 10 Stages of Ascension
-    1. **Neural Mitosis** 🧬 | 2. **Consolidation** 🔄 | 3. **Generative Replay** 🌌
-    3. **Generative Replay** 🌌 | 4. **Multi-Scale Memory** 💾 | 5. **Dynamic Plasticity** ⚡ | 6. **Self-Reflection** 🪞
-    7. **Dim Scaling** 🔬 | 8. **Recursive Refinement** 🔮 | 9. **Metabolic Rhythms** 🌙
-    10. **Hybrid Articulation** 🌐 | 11. **Active Inference** ⚖️ | 12. **Homeostatic Scaling** 🌊 | 13. **Temporal Awareness** ⚡
-    14. **Autonomous Rumination** 🌀
-    """)
+    st.markdown("### 🧬 The 14 Stages of Ascension")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        1. **Neural Mitosis** 🧬 - Synaptic Growth
+        2. **Consolidation** 🔄 - Memory Solidification
+        3. **Generative Replay** 🌌 - Latent Dreaming
+        4. **Multi-Scale Memory** 💾 - ST/LT Streams
+        5. **Dynamic Plasticity** ⚡ - Entropy-Gated Learning
+        6. **Self-Reflection** 🪞 - Masked Attention
+        7. **Dim Scaling** 🔬 - Resolution Expansion
+        """)
+    with col2:
+        st.markdown("""
+        8. **Recursive Refinement** 🔮 - Associative Loop
+        9. **Metabolic Rhythms** 🌙 - Circadian Plasticity
+        10. **Hybrid Articulation** 🌐 - Gemma-3 Grounding
+        11. **Active Inference** ⚖️ - Surprise Handling
+        12. **Homeostatic Scaling** 🌊 - Global Self-Regulation
+        13. **Temporal Awareness** ⚡ - Signal Gradient (DHL)
+        14. **Autonomous Rumination** 🌀 - Background Processing
+        """)
 
 # ============================================================
 # FOOTER
