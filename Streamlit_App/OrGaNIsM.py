@@ -4,6 +4,11 @@ import time
 import datetime
 import io
 
+import sys
+import os
+# Add the parent directory to the path so it can find core.py
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # --- PAGE CONFIG (Must be first Streamlit command) ---
 st.set_page_config(
     page_title="🧬 Nano-Daemon AGI",
