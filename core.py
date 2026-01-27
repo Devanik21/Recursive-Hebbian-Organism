@@ -24,6 +24,17 @@ class PlasticCortex(nn.Module):
         self.experience_buffer = []
         self.max_buffer = 10
 
+        # --- STEP 11: Active Inference & Surprise ---
+        self.last_prediction = None
+        self.curiosity_score = 0.0
+        
+        # --- STEP 12: Homeostatic Equilibrium ---
+        self.target_excitation = 0.2
+        self.metabolic_balance = 1.0
+
+        # --- STEP 13: Temporal Awareness (DHL) ---
+        self.signal_history = []
+
     def grow(self, new_neurons=128):
         """Neural Mitosis: Physically grows the brain's synaptic capacity."""
         print(f"🧬 MITOTIC EVENT: Growing cortex by {new_neurons} neurons...")
@@ -135,10 +146,25 @@ class PlasticCortex(nn.Module):
         total_entropy = 0
         
         for t in range(seq_len):
-            curr_signal = x[:, t, :] # [Batch, Dim]
-            
-            # Mix in both Short-term and Long-term memories
+            # --- STEP 11: Active Inference (Prediction Error) ---
+            # We predict the next signal will be similar to our current latent memory
+            predicted_signal = self.short_term_latent
+            surprise = torch.norm(curr_signal - predicted_signal).item() if predicted_signal is not None else 0.5
+            self.curiosity_score = 0.9 * self.curiosity_score + 0.1 * surprise
+
+            # --- STEP 13: Temporal Differential Learning (DHL) ---
+            # We look at the 'Signal Slope'
+            if len(self.signal_history) > 0:
+                gradient = torch.norm(curr_signal - self.signal_history[-1]).item()
+                dhl_boost = 1.0 + (gradient * 5.0) # Sharp changes boost intensity
+            else:
+                dhl_boost = 1.0
+            self.signal_history.append(curr_signal.detach())
+            if len(self.signal_history) > 5: self.signal_history.pop(0)
+
+            # Mix in memories with Homeostatic Gating
             signal = 0.6 * curr_signal + 0.3 * self.short_term_latent + 0.1 * self.long_term_latent
+            signal = signal * self.metabolic_balance # Metabolic scaling
             
             # Update Latent Streams
             with torch.no_grad():
@@ -155,8 +181,9 @@ class PlasticCortex(nn.Module):
 
             # 4. HEBBIAN LEARNING (Advanced Cognitive Core)
             with torch.no_grad():
-                # --- STEP 6: Curvature-Aware Plasticity ---
-                dynamic_plasticity = self.plasticity * (1.0 + entropy * 10)
+                # --- STEP 6: Curvature-Aware Plasticity + STEP 11 Surpise ---
+                # Surprising information triggers 10x higher learning intensity
+                dynamic_plasticity = self.plasticity * (1.0 + entropy * 10) * (1.0 + surprise * 2.0) * dhl_boost
                 
                 # --- STEP 7: Guided Self-Reflection ---
                 reflection_mask = (torch.abs(activation) > torch.quantile(torch.abs(activation), 0.9)).float()
@@ -170,6 +197,15 @@ class PlasticCortex(nn.Module):
                 self.synapse.data += dynamic_plasticity * delta_w
                 self.synapse.data = torch.nn.functional.normalize(self.synapse.data, dim=1)
                 
+                # --- STEP 12: Homeostatic Equilibrium ---
+                # Regulate metabolic balance based on activation density
+                current_excitation = torch.mean(torch.abs(activation)).item()
+                if current_excitation > self.target_excitation:
+                    self.metabolic_balance *= 0.99 # Dampen excitation
+                else:
+                    self.metabolic_balance *= 1.01 # Restore sensitivity
+                self.metabolic_balance = max(0.1, min(2.0, self.metabolic_balance))
+
             last_activation = activation
 
         # Store for consolidation (the whole stream)
