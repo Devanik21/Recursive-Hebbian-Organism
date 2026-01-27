@@ -221,7 +221,7 @@ if "brain" not in st.session_state or not hasattr(st.session_state.brain, 'metac
     st.session_state.entropy_history = []
     st.session_state.files_eaten = 0
 
-if "bridge" not in st.session_state:
+if "bridge" not in st.session_state or not hasattr(st.session_state.bridge, 'client'):
     st.session_state.bridge = GemmaBridge()
 
 if "conversation_history" not in st.session_state:
