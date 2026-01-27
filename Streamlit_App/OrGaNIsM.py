@@ -207,7 +207,7 @@ class GemmaBridge:
 # ============================================================
 # SESSION STATE INITIALIZATION
 # ============================================================
-if "brain" not in st.session_state or not hasattr(st.session_state.brain, 'metabolic_balance'):
+if "brain" not in st.session_state or not hasattr(st.session_state.brain, 'metacognition_confidence'):
     st.session_state.brain = PlasticCortex()
     # Try to load saved weights
     if os.path.exists("brain_weights.pth"):
@@ -410,6 +410,20 @@ def fragment_sidebar_controls():
                         if raw_bytes: feed_organism(raw_bytes, os.path.basename(f_path))
                 except: continue
             st.success(f"Consumed {len(found_files)} knowledge nodes.")
+    
+    st.divider()
+    st.markdown("### 🌌 AGI Endgame Controls")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("😴 Deep Sleep"):
+            brain.deep_sleep()
+            st.success("Deep Sleep complete! Synapses pruned.")
+    
+    with col2:
+        if st.button("👤 Switch Perspective"):
+            brain.switch_perspective(to_other=not brain.processing_other)
+            st.info(f"Now in '{brain.get_agi_status()['perspective']}' mode")
 
 @st.fragment
 def fragment_dialogue():
@@ -444,16 +458,34 @@ def fragment_dialogue():
 @st.fragment
 def fragment_metrics():
     st.markdown("## 📊 Cognitive Metrics")
-    neuron_count = brain.synapse.shape[1]
+    
+    # Row 1: Core metrics
     col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("🧠 Neurons", f"{neuron_count:,}")
+    col1.metric("🧠 Neurons", f"{brain.synapse.shape[1]:,}")
     col2.metric("📈 Stability", f"{st.session_state.last_stability:.4f}")
     col3.metric("💾 Buffer", len(brain.experience_buffer))
     col4.metric("✨ Curiosity", f"{brain.curiosity_score:.2f}")
     col5.metric("🌐 Bridge", "Online" if bridge.model else "Offline")
     
+    # Row 2: AGI Endgame metrics
+    st.markdown("### 🌌 AGI Endgame Status")
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1.metric("🪞 Confidence", f"{brain.metacognition_confidence:.2f}")
+    col2.metric("🔥 Motivation", brain.motivation_state)
+    col3.metric("⚡ Criticality", f"{brain.criticality_score:.2f}")
+    col4.metric("🔗 Causal Nodes", len(brain.causal_graph))
+    col5.metric("🌐 Prediction Err", f"{brain.prediction_error:.3f}")
+    col6.metric("👤 Perspective", "Other" if brain.processing_other else "Self")
+    
+    # Motivation warning
+    if brain.motivation_state == "BORED":
+        st.warning("🥱 **The organism is BORED!** Feed it something novel.")
+    elif brain.motivation_state == "OVERWHELMED":
+        st.error("😵 **The organism is OVERWHELMED!** Slow down input or trigger Deep Sleep.")
+    
     if st.session_state.entropy_history:
         st.line_chart(st.session_state.entropy_history, width="stretch")
+
 
 @st.fragment
 def fragment_memory_viz():
@@ -564,28 +596,41 @@ fragment_autonomous_ruminator()
 
 # Static Expanders
 with st.expander("📚 Hyper-Intelligence Features", expanded=False):
-    st.markdown("### 🧬 The 14 Stages of Ascension")
+    st.markdown("### 🧬 The 21 Stages of Ascension")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
-        1. **Neural Mitosis** 🧬 - Synaptic Growth
-        2. **Consolidation** 🔄 - Memory Solidification
-        3. **Generative Replay** 🌌 - Latent Dreaming
-        4. **Multi-Scale Memory** 💾 - ST/LT Streams
-        5. **Dynamic Plasticity** ⚡ - Entropy-Gated Learning
-        6. **Self-Reflection** 🪞 - Masked Attention
-        7. **Dim Scaling** 🔬 - Resolution Expansion
+        **Core Neural:**
+        1. Neural Mitosis 🧬
+        2. Consolidation 🔄
+        3. Generative Replay 🌌
+        4. Multi-Scale Memory 💾
+        5. Dynamic Plasticity ⚡
+        6. Self-Reflection 🪞
+        7. Dim Scaling 🔬
         """)
     with col2:
         st.markdown("""
-        8. **Recursive Refinement** 🔮 - Associative Loop
-        9. **Metabolic Rhythms** 🌙 - Circadian Plasticity
-        10. **Hybrid Articulation** 🌐 - Gemma-3 Grounding
-        11. **Active Inference** ⚖️ - Surprise Handling
-        12. **Homeostatic Scaling** 🌊 - Global Self-Regulation
-        13. **Temporal Awareness** ⚡ - Signal Gradient (DHL)
-        14. **Autonomous Rumination** 🌀 - Background Processing
+        **Cognitive:**
+        8. Recursive Refinement 🔮
+        9. Metabolic Rhythms 🌙
+        10. Hybrid Articulation 🌐
+        11. Active Inference ⚖️
+        12. Homeostatic Scaling 🌊
+        13. Temporal Awareness ⚡
+        14. Autonomous Rumination 🌀
+        """)
+    with col3:
+        st.markdown("""
+        **AGI Endgame:**
+        15. World Modeling 🌍
+        16. Metacognition 🪞🪞
+        17. Theory of Mind 👤
+        18. Intrinsic Motivation 🔥
+        19. Causal Inference 🔗
+        20. Sleep-Wake Cycle 😴
+        21. Edge-of-Chaos ⚡🌀
         """)
 
 # ============================================================
