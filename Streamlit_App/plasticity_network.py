@@ -60,7 +60,7 @@ class PlasticityNetwork(nn.Module):
         # Initialize weights to small values for stability
         for layer in self.net:
             if isinstance(layer, nn.Linear):
-                nn.init.xavier_uniform_(layer.weight, gain=1.0)
+                nn.init.xavier_uniform_(layer.weight, gain=0.1)
                 nn.init.zeros_(layer.bias)
     
     def forward(self, pre: torch.Tensor, post: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
