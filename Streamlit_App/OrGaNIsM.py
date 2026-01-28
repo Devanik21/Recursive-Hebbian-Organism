@@ -580,22 +580,23 @@ def fragment_sidebar_controls():
         st.session_state.meta_learner = MetaLearner(
             brain, 
             st.session_state.genome,
-            lr=0.001,
-            plasticity_lr=0.1
+            lr=0.01,  # Faster learning
+            plasticity_lr=0.5  # Stronger updates
         )
     
     col_meta1, col_meta2 = st.columns(2)
     with col_meta1:
         num_episodes = st.number_input("Episodes", min_value=1, max_value=100, value=10, key="meta_episodes")
     with col_meta2:
-        inner_steps = st.number_input("Inner Steps", min_value=1, max_value=20, value=5, key="meta_inner_steps")
+        inner_steps = st.number_input("Inner Steps (Depth of thought)", min_value=1, max_value=20, value=10, key="meta_inner_steps")
     
     if st.button("Run Meta-Training", key="run_meta_training"):
         progress_bar = st.progress(0)
         losses = []
         
         for i in range(num_episodes):
-            loss = st.session_state.meta_learner.meta_step(num_inner_steps=inner_steps)
+            # Use Task Bank cycling
+            loss = st.session_state.meta_learner.meta_step(num_inner_steps=inner_steps, task_idx=i % 10)
             losses.append(loss)
             st.session_state.meta_loss_history.append(loss)
             progress_bar.progress((i + 1) / num_episodes)
