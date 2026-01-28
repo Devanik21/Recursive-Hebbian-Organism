@@ -86,10 +86,9 @@ class MetaLearner:
         # Fix: Use randint (Long) because embeddings expect integers, not floats!
         cue = torch.randint(0, 256, (1, seq_length)).long().to(device)
         
-        # Target: A random latent state we want the brain to associate with the cue
-        # Shape must match brain's hidden dimension
-        hidden_dim = self.brain.synapse.shape[1]
-        target_signal = torch.randn(1, hidden_dim).to(device)
+        # Target: A random latent state we want the brain to associate with the cue.
+        # We use tanh here because the brain's activation is tanh-bounded.
+        target_signal = torch.tanh(torch.randn(1, hidden_dim).to(device))
         
         # === 2. INITIALIZE FAST WEIGHTS (Functional approach) ===
         # Clone to create a copy that's part of the computation graph
