@@ -292,7 +292,7 @@ def feed_organism(file_bytes, filename):
     weight_before = brain.synapse.data.clone()
     
     with torch.no_grad():
-        _, stability = brain(data)
+        _, stability, _ = brain(data)  # Forward returns (activation, entropy, signal)
     
     # Calculate weight delta (L2 norm of change)
     weight_delta = torch.norm(brain.synapse.data - weight_before).item()
