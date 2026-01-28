@@ -51,6 +51,16 @@ class MetaLearner:
         # The "God Optimizer" - updates the Genome's parameters
         self.optimizer = torch.optim.Adam(genome.parameters(), lr=lr)
         
+        # === ASSOCIATIVE TASK GENERATOR (Fixed Projection) ===
+        # This creates a DETERMINISTIC mapping from cue -> target.
+        # The projection is FROZEN (not learned) to provide stable ground truth.
+        input_dim = brain.synapse.shape[0]   # Embedding dimension (e.g., 32)
+        hidden_dim = brain.synapse.shape[1]  # Target dimension (e.g., 1024)
+        self.target_projection = torch.nn.Linear(input_dim, hidden_dim, bias=False)
+        # Freeze it - this is NOT learned, just a fixed function
+        for param in self.target_projection.parameters():
+            param.requires_grad = False
+        
         # Tracking metrics
         self.loss_history = []
         self.episode_count = 0
@@ -76,6 +86,9 @@ class MetaLearner:
         # Fix: Device Agnosticism (Avoid CPU/GPU mismatch crash)
         device = self.brain.synapse.device
         
+        # Move target projection to correct device
+        self.target_projection = self.target_projection.to(device)
+        
         # Fix: State Decontamination (Prevent memory bleeding between episodes)
         with torch.no_grad():
             self.brain.short_term_latent.fill_(0)
@@ -86,9 +99,13 @@ class MetaLearner:
         # Fix: Use randint (Long) because embeddings expect integers, not floats!
         cue = torch.randint(0, 256, (1, seq_length)).long().to(device)
         
-        # Target: A random latent state we want the brain to associate with the cue.
-        # We use tanh here because the brain's activation is tanh-bounded.
-        target_signal = torch.tanh(torch.randn(1, hidden_dim).to(device))
+        # Target: A DETERMINISTIC function of the cue (Associative Task Generator)
+        # This solves the "Invisible Target" paradox - the target is now STABLE.
+        with torch.no_grad():
+            cue_embedding = self.brain.byte_embed(cue).mean(dim=1)  # [1, input_dim]
+        # Project to target space using the FIXED projection
+        target_signal = self.target_projection(cue_embedding)  # [1, hidden_dim]
+        target_signal = torch.tanh(target_signal)  # Normalize to [-1, 1] range
         
         # === 2. INITIALIZE FAST WEIGHTS (Functional approach) ===
         # Clone to create a copy that's part of the computation graph
