@@ -61,11 +61,29 @@ class MetaLearner:
         for param in self.target_projection.parameters():
             param.requires_grad = False
         
+        # === TASK BANK (Fixed Training Tasks) ===
+        # These are the SAME tasks used every epoch, enabling measurement.
+        # The Genome cannot memorize them because it only sees (pre, post, w).
+        self.num_training_tasks = 10
+        self.seq_length = 10
+        self.task_bank_cues = []
+        self.task_bank_targets = []
+        
+        # Pre-generate the fixed tasks
+        with torch.no_grad():
+            for _ in range(self.num_training_tasks):
+                cue = torch.randint(0, 256, (1, self.seq_length)).long()
+                cue_embedding = brain.byte_embed(cue).mean(dim=1)
+                target = torch.tanh(self.target_projection(cue_embedding))
+                self.task_bank_cues.append(cue)
+                self.task_bank_targets.append(target)
+        
         # Tracking metrics
         self.loss_history = []
+        self.val_loss_history = []  # Validation on unseen tasks
         self.episode_count = 0
     
-    def meta_step(self, num_inner_steps: int = 5, seq_length: int = 10) -> float:
+    def meta_step(self, num_inner_steps: int = 5, task_idx: int = None) -> float:
         """
         Execute one meta-learning episode.
         
@@ -76,7 +94,8 @@ class MetaLearner:
         
         Args:
             num_inner_steps: Number of inner loop iterations (keep low to avoid OOM)
-            seq_length: Length of synthetic byte sequences
+            task_idx: If provided, use this task from the bank. 
+                      If None, cycle through task bank based on episode count.
             
         Returns:
             loss: The task loss for this episode (lower = better learning rule)
@@ -94,18 +113,12 @@ class MetaLearner:
             self.brain.short_term_latent.fill_(0)
             self.brain.long_term_latent.fill_(0)
         
-        # === 1. CREATE SYNTHETIC ASSOCIATION TASK (Cue -> Target) ===
+        # === 1. SELECT TASK FROM BANK (Enables Learning Measurement) ===
+        if task_idx is None:
+            task_idx = self.episode_count % self.num_training_tasks
         
-        # Fix: Use randint (Long) because embeddings expect integers, not floats!
-        cue = torch.randint(0, 256, (1, seq_length)).long().to(device)
-        
-        # Target: A DETERMINISTIC function of the cue (Associative Task Generator)
-        # This solves the "Invisible Target" paradox - the target is now STABLE.
-        with torch.no_grad():
-            cue_embedding = self.brain.byte_embed(cue).mean(dim=1)  # [1, input_dim]
-        # Project to target space using the FIXED projection
-        target_signal = self.target_projection(cue_embedding)  # [1, hidden_dim]
-        target_signal = torch.tanh(target_signal)  # Normalize to [-1, 1] range
+        cue = self.task_bank_cues[task_idx].to(device)
+        target_signal = self.task_bank_targets[task_idx].to(device)
         
         # === 2. INITIALIZE FAST WEIGHTS (Functional approach) ===
         # Clone to create a copy that's part of the computation graph
@@ -150,28 +163,76 @@ class MetaLearner:
         
         return loss_value
     
-    def train(self, num_episodes: int = 100, verbose: bool = True) -> list:
+    def validate_generalization(self, num_inner_steps: int = 5) -> float:
         """
-        Run multiple meta-learning episodes.
+        Test on a FRESH random task (never seen in training).
+        This proves the Genome learned a GENERAL rule, not memorization.
+        
+        Returns:
+            loss: Recall loss on the unseen task
+        """
+        device = self.brain.synapse.device
+        self.target_projection = self.target_projection.to(device)
+        
+        # State Decontamination
+        with torch.no_grad():
+            self.brain.short_term_latent.fill_(0)
+            self.brain.long_term_latent.fill_(0)
+        
+        # === FRESH RANDOM TASK (Never in training bank) ===
+        cue = torch.randint(0, 256, (1, self.seq_length)).long().to(device)
+        with torch.no_grad():
+            cue_embedding = self.brain.byte_embed(cue).mean(dim=1)
+        target_signal = torch.tanh(self.target_projection(cue_embedding))
+        
+        # === RUN INNER LOOP (No gradient - just testing) ===
+        fast_weights = self.brain.synapse.clone().detach()
+        
+        with torch.no_grad():
+            for step in range(num_inner_steps):
+                activation, _, pre = self.brain(cue, override_weights=fast_weights)
+                post = 0.5 * activation + 0.5 * target_signal
+                delta_w = self.genome(pre, post, fast_weights)
+                fast_weights = fast_weights + self.plasticity_lr * delta_w
+                fast_weights = F.normalize(fast_weights, p=2, dim=1)
+            
+            # Test recall
+            final_activation, _, _ = self.brain(cue, override_weights=fast_weights)
+            loss = F.mse_loss(final_activation, target_signal)
+        
+        return loss.item()
+    
+    def train(self, num_episodes: int = 100, validate_every: int = 10, verbose: bool = True) -> dict:
+        """
+        Run meta-learning with periodic validation on unseen tasks.
         
         Args:
             num_episodes: Number of meta-learning episodes
+            validate_every: Run validation every N episodes
             verbose: Whether to print progress
             
         Returns:
-            losses: List of loss values for each episode
+            dict with 'train_losses' and 'val_losses'
         """
-        losses = []
+        train_losses = []
+        val_losses = []
         
         for episode in range(num_episodes):
-            loss = self.meta_step()
-            losses.append(loss)
+            # Train on task from bank (cycling through)
+            loss = self.meta_step(task_idx=episode % self.num_training_tasks)
+            train_losses.append(loss)
             
-            if verbose and (episode + 1) % 10 == 0:
-                avg_loss = sum(losses[-10:]) / 10
-                print(f"Episode {episode + 1}/{num_episodes} | Loss: {loss:.4f} | Avg(10): {avg_loss:.4f}")
+            # === VALIDATION CHECKPOINT (Proves Generality) ===
+            if (episode + 1) % validate_every == 0:
+                val_loss = self.validate_generalization()
+                val_losses.append(val_loss)
+                self.val_loss_history.append(val_loss)
+                
+                if verbose:
+                    avg_train = sum(train_losses[-validate_every:]) / validate_every
+                    print(f"Ep {episode+1}/{num_episodes} | Train: {avg_train:.4f} | Val: {val_loss:.4f}")
         
-        return losses
+        return {'train_losses': train_losses, 'val_losses': val_losses}
     
     def get_evolved_genome(self):
         """Return the evolved Genome for deployment."""
