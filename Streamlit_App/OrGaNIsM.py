@@ -34,6 +34,8 @@ st.set_page_config(
 
 # --- IMPORTS FROM OUR ORGANISM ---
 from core import PlasticCortex
+from plasticity_network import PlasticityNetwork
+from meta_learner import MetaLearner
 
 # --- CUSTOM CSS FOR A PREMIUM DARK THEME ---
 st.markdown("""
@@ -256,6 +258,16 @@ if "last_weight_delta" not in st.session_state:
 
 if "weight_snapshot" not in st.session_state:
     st.session_state.weight_snapshot = None
+
+# --- META-LEARNING: Differentiable Plasticity ---
+if "genome" not in st.session_state:
+    st.session_state.genome = PlasticityNetwork(hidden_dim=16)
+    
+if "meta_learner" not in st.session_state:
+    st.session_state.meta_learner = None  # Initialized when brain is available
+    
+if "meta_loss_history" not in st.session_state:
+    st.session_state.meta_loss_history = []
 
 brain = st.session_state.brain
 bridge = st.session_state.bridge
@@ -527,6 +539,49 @@ def fragment_sidebar_controls():
                 st.info(f"**Top Causal Chains:**\n{msg}")
             else:
                 st.info("No causal nodes mapped yet.")
+
+    # --- META-LEARNING: Differentiable Plasticity ---
+    st.divider()
+    st.markdown("### 🧬 Meta-Learning (Evolve the Learning Rule)")
+    st.caption("Train the Genome to discover an optimal plasticity rule.")
+    
+    # Initialize MetaLearner if not already done
+    if st.session_state.meta_learner is None:
+        st.session_state.meta_learner = MetaLearner(
+            brain, 
+            st.session_state.genome,
+            lr=0.001,
+            plasticity_lr=0.1
+        )
+    
+    col_meta1, col_meta2 = st.columns(2)
+    with col_meta1:
+        num_episodes = st.number_input("Episodes", min_value=1, max_value=100, value=10, key="meta_episodes")
+    with col_meta2:
+        inner_steps = st.number_input("Inner Steps", min_value=1, max_value=20, value=5, key="meta_inner_steps")
+    
+    if st.button("Run Meta-Training", key="run_meta_training"):
+        progress_bar = st.progress(0)
+        losses = []
+        
+        for i in range(num_episodes):
+            loss = st.session_state.meta_learner.meta_step(num_inner_steps=inner_steps)
+            losses.append(loss)
+            st.session_state.meta_loss_history.append(loss)
+            progress_bar.progress((i + 1) / num_episodes)
+        
+        avg_loss = sum(losses) / len(losses)
+        st.success(f"Completed {num_episodes} episodes! Avg Loss: {avg_loss:.4f}")
+        
+        # Show loss trend
+        if len(st.session_state.meta_loss_history) > 1:
+            st.line_chart(st.session_state.meta_loss_history[-50:])
+    
+    # Show current stats
+    if st.session_state.meta_loss_history:
+        latest = st.session_state.meta_loss_history[-1]
+        total_eps = len(st.session_state.meta_loss_history)
+        st.metric("Genome Evolution", f"{total_eps} episodes", f"Loss: {latest:.4f}")
 
 @st.fragment(run_every=2)
 def fragment_dialogue():
