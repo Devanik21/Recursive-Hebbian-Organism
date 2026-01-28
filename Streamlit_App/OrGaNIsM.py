@@ -268,6 +268,9 @@ if "meta_learner" not in st.session_state:
     
 if "meta_loss_history" not in st.session_state:
     st.session_state.meta_loss_history = []
+    
+if "use_evolved_rule" not in st.session_state:
+    st.session_state.use_evolved_rule = False  # Toggle for Genome-driven plasticity
 
 brain = st.session_state.brain
 bridge = st.session_state.bridge
@@ -291,8 +294,28 @@ def feed_organism(file_bytes, filename):
     # --- WEIGHT DELTA TRACKING (Prove Hebbian learning is happening) ---
     weight_before = brain.synapse.data.clone()
     
+    # Check if using Evolved Genome (Meta-Learning)
+    use_genome = st.session_state.get("use_evolved_rule", False)
+    
     with torch.no_grad():
-        _, stability, _ = brain(data)  # Forward returns (activation, entropy, signal)
+        # Forward pass - disable internal learning if using Genome
+        activation, stability, mean_signal = brain(data, disable_learning=use_genome)
+        
+        # --- PATH A: META-EVOLVED PLASTICITY (Batch Mode) ---
+        if use_genome and st.session_state.genome:
+            # Mean Post-Synaptic Activity
+            post_mean = torch.tanh(torch.matmul(mean_signal, brain.synapse))
+            
+            # Consult Genome ONCE (Fast!)
+            delta_w = st.session_state.genome(mean_signal, post_mean, brain.synapse)
+            
+            # Apply Update
+            brain.synapse.data += 0.1 * delta_w
+            brain.synapse.data = torch.nn.functional.normalize(brain.synapse.data, dim=1)
+            
+            st.toast(f"Genome Applied | Mag: {delta_w.norm().item():.4f}")
+        
+        # --- PATH B: Internal learning happened automatically if disable_learning=False ---
     
     # Calculate weight delta (L2 norm of change)
     weight_delta = torch.norm(brain.synapse.data - weight_before).item()
@@ -544,6 +567,13 @@ def fragment_sidebar_controls():
     st.divider()
     st.markdown("### 🧬 Meta-Learning (Evolve the Learning Rule)")
     st.caption("Train the Genome to discover an optimal plasticity rule.")
+    
+    # Toggle to use Evolved Genome for feeding
+    st.session_state.use_evolved_rule = st.checkbox(
+        "🧠 Use Evolved Rule (Genome-Driven Plasticity)",
+        value=st.session_state.use_evolved_rule,
+        help="When ON, feeding uses the meta-learned Genome instead of Oja's Rule"
+    )
     
     # Initialize MetaLearner if not already done
     if st.session_state.meta_learner is None:
