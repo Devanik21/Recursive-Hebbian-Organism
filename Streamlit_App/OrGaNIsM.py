@@ -603,9 +603,19 @@ def fragment_sidebar_controls():
         avg_loss = sum(losses) / len(losses)
         st.success(f"Completed {num_episodes} episodes! Avg Loss: {avg_loss:.4f}")
         
-        # Show loss trend
+        # Show loss trend with Moving Average
         if len(st.session_state.meta_loss_history) > 1:
-            st.line_chart(st.session_state.meta_loss_history[-50:])
+            data = st.session_state.meta_loss_history[-100:]
+            # Calculate rolling average (window architecture)
+            window = 5
+            rolling_avg = [sum(data[max(0, i-window+1):i+1])/len(data[max(0, i-window+1):i+1]) for i in range(len(data))]
+            
+            import pandas as pd
+            chart_data = pd.DataFrame({
+                "Raw Loss": data,
+                "Learning Trend (MA)": rolling_avg
+            })
+            st.line_chart(chart_data)
     
     # Show current stats
     if st.session_state.meta_loss_history:
