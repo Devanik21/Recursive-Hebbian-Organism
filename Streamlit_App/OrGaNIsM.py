@@ -340,7 +340,7 @@ def trigger_dream():
 # UI FRAGMENTS (For Independent Reruns)
 # ============================================================
 
-@st.fragment(run_every=3)
+@st.fragment(run_every=2)
 def fragment_sidebar_status():
     st.markdown("## 🧬 Organism Status")
     neuron_count = brain.synapse.shape[1]
@@ -528,7 +528,7 @@ def fragment_sidebar_controls():
             else:
                 st.info("No causal nodes mapped yet.")
 
-@st.fragment
+@st.fragment(run_every=2)
 def fragment_dialogue():
     st.markdown("## 💬 Dialogue with the Organism")
     query = st.text_input("🗣️ Ask the Organism anything:", placeholder="e.g., What is consciousness?", key="query_input")
@@ -590,7 +590,7 @@ def fragment_metrics():
         st.line_chart(st.session_state.entropy_history, width="stretch")
 
 
-@st.fragment
+@st.fragment(run_every=2)
 def fragment_memory_viz():
     st.markdown("## 🧬 Latent Memory Streams")
     col1, col2 = st.columns(2)
@@ -601,7 +601,7 @@ def fragment_memory_viz():
         st.markdown("### 🌊 Long-Term")
         st.bar_chart(brain.long_term_latent.detach().numpy().flatten()[:32], width="stretch")
 
-@st.fragment
+@st.fragment(run_every=2)
 def fragment_knowledge_injection():
     st.markdown("## 🌐 Direct Knowledge Injection")
     tab1, tab2 = st.tabs(["📝 Text Input", "🌍 Internet Feed"])
@@ -631,7 +631,7 @@ def fragment_knowledge_injection():
                 except Exception as e: 
                     st.error(f"Error fetching feed: {e}")
 
-@st.fragment
+@st.fragment(run_every=2)
 def fragment_history_gallery():
     col1, col2 = st.columns(2)
     with col1:
