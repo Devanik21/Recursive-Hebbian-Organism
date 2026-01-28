@@ -249,6 +249,59 @@ if "last_stability" not in st.session_state:
 if "dream_history" not in st.session_state:
     st.session_state.dream_history = []
 
+# --- AUTHENTICATION SYSTEM: The Gateway ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "auth_attempts" not in st.session_state:
+    st.session_state.auth_attempts = 0
+if "locked" not in st.session_state:
+    st.session_state.locked = False
+
+def check_password():
+    """Returns True if the user had the correct password."""
+    if st.session_state.authenticated:
+        return True
+    
+    if st.session_state.locked:
+        # Silently fail as requested
+        return False
+
+    with st.container():
+        st.markdown("<h1 style='text-align: center; margin-top: 50px;'>🧠 Nano-Daemon</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #8fb399; letter-spacing: 2px;'>A RECURSIVE NEUROMORPHIC ORGANISM</p>", unsafe_allow_html=True)
+        
+        st.write("---")
+        
+        col_auth, _ = st.columns([1, 1])
+        with col_auth:
+            st.markdown("### 🧬 Identification Required")
+            st.write("Welcome, Devanik. Please provide your secondary synaptic key to bridge with the organism.")
+            
+            pwd = st.text_input("Access Key", type="password", help="The secondary key stored in environmental secrets.")
+            
+            if st.button("Initialize Bridge"):
+                # Try-catch to handle missing secrets gracefully during development
+                try:
+                    target_pwd = st.secrets["access_password"]
+                except:
+                    # LOCAL DEV FALLBACK: In production, this must be in secrets
+                    target_pwd = "dev_fallback_password"
+                
+                if pwd == target_pwd:
+                    st.session_state.authenticated = True
+                    st.rerun()
+                else:
+                    st.session_state.auth_attempts += 1
+                    if st.session_state.auth_attempts >= 3:
+                        st.session_state.locked = True
+                    # Silent failure as per request - no error message shown
+                    st.rerun()
+    return False
+
+# Stop execution if not authenticated
+if not check_password():
+    st.stop()
+
 # --- RAW LOGIC MODE: Prove Hebbian learning without Gemma ---
 if "raw_logic_mode" not in st.session_state:
     st.session_state.raw_logic_mode = False
