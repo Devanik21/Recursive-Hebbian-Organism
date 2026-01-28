@@ -340,7 +340,7 @@ def trigger_dream():
 # UI FRAGMENTS (For Independent Reruns)
 # ============================================================
 
-@st.fragment
+@st.fragment(run_every=3)
 def fragment_sidebar_status():
     st.markdown("## 🧬 Organism Status")
     neuron_count = brain.synapse.shape[1]
@@ -558,7 +558,7 @@ def fragment_dialogue():
         else:
             st.info("🌑 **Cerebral Bridge Offline**")
 
-@st.fragment
+@st.fragment(run_every=3)
 def fragment_metrics():
     st.markdown("## 📊 Cognitive Metrics")
     
