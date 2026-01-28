@@ -132,9 +132,13 @@ class MetaLearner:
             # Fix: Capture 'pre' (signal) from the updated return signature
             activation, _, pre = self.brain(cue, override_weights=fast_weights)
             
-            # CRITICAL: Clamp activation towards target so Hebbian can learn
-            # This teaches the rule: "When I see this pattern, activate like this"
-            post = 0.5 * activation + 0.5 * target_signal
+            # === SCHEDULED TEACHER FORCING ===
+            # Teacher signal decreases from 100% to 0% across inner steps.
+            # This forces the Genome to learn a rule that works at deployment (0% teacher).
+            # Step 0: teacher_ratio = 1.0 (pure target - like studying with answers)
+            # Step N-1: teacher_ratio = 0.0 (pure activation - like deployment)
+            teacher_ratio = 1.0 - (step / max(num_inner_steps - 1, 1))
+            post = teacher_ratio * target_signal + (1.0 - teacher_ratio) * activation
             
             # Ask Genome for the weight update
             delta_w = self.genome(pre, post, fast_weights)
