@@ -16,9 +16,17 @@ import time
 import datetime
 import io
 
+# Optional imports for RSS feed functionality (graceful degradation)
+try:
+    import requests
+    import xml.etree.ElementTree as ET
+    RSS_AVAILABLE = True
+except ImportError:
+    RSS_AVAILABLE = False
+
 # --- PAGE CONFIG (Must be first Streamlit command for Streamlit UI) ---
 st.set_page_config(
-    page_title="🧬 Nano-Daemon AGI",
+    page_title="🧬 Nano-Daemon: Hebbian Organism",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -144,7 +152,7 @@ class GemmaBridge:
         # 1. Check Streamlit secrets (PRIMARY for Cloud deployment)
         try:
             self.api_key = st.secrets["GEMINI_API_KEY"]
-        except:
+        except (KeyError, FileNotFoundError):
             pass
         
         # 2. Check environment variable (for local dev)
@@ -159,7 +167,7 @@ class GemmaBridge:
                         if "GEMINI_API_KEY" in line:
                             self.api_key = line.split("=")[1].strip().strip('"').strip("'")
                             break
-            except:
+            except (IOError, OSError, ValueError):
                 pass
         
         if not self.api_key:
@@ -239,6 +247,16 @@ if "last_stability" not in st.session_state:
 if "dream_history" not in st.session_state:
     st.session_state.dream_history = []
 
+# --- RAW LOGIC MODE: Prove Hebbian learning without Gemma ---
+if "raw_logic_mode" not in st.session_state:
+    st.session_state.raw_logic_mode = False
+
+if "last_weight_delta" not in st.session_state:
+    st.session_state.last_weight_delta = 0.0
+
+if "weight_snapshot" not in st.session_state:
+    st.session_state.weight_snapshot = None
+
 brain = st.session_state.brain
 bridge = st.session_state.bridge
 
@@ -255,10 +273,20 @@ def get_metabolic_state(hour):
         return "🌓 RESTING", "Moderate plasticity, light dreaming"
 
 def feed_organism(file_bytes, filename):
-    """Feeds raw bytes to the organism's brain."""
+    """Feeds raw bytes to the organism's brain and tracks weight changes."""
     data = torch.tensor(list(file_bytes[:4096]), dtype=torch.long).unsqueeze(0)
+    
+    # --- WEIGHT DELTA TRACKING (Prove Hebbian learning is happening) ---
+    weight_before = brain.synapse.data.clone()
+    
     with torch.no_grad():
         _, stability = brain(data)
+    
+    # Calculate weight delta (L2 norm of change)
+    weight_delta = torch.norm(brain.synapse.data - weight_before).item()
+    st.session_state.last_weight_delta = weight_delta
+    st.session_state.weight_snapshot = brain.synapse.data.clone()
+    
     st.session_state.files_eaten += 1
     st.session_state.last_stability = stability
     st.session_state.entropy_history.append(stability)
@@ -275,18 +303,21 @@ def feed_organism(file_bytes, filename):
     if st.session_state.files_eaten % 20 == 0 and st.session_state.files_eaten > 0:
         brain.grow(256)
     
-    return stability
+    return stability, weight_delta
 
 def query_organism(query_text):
-    """Processes a query through the Hebbian brain and Gemma bridge."""
+    """Processes a query through the Hebbian brain and optionally Gemma bridge."""
     query_bytes = query_text.encode('utf-8')[:1024]
     
     # 1. RAW ASSOCIATION (Hebbian Ground Truth)
     response_bytes = brain.associate(torch.tensor(list(query_bytes), dtype=torch.long).unsqueeze(0))
     synaptic_anchors = response_bytes.decode('utf-8', errors='ignore')
     
-    # 2. HYBRID ARTICULATION (Gemma-3)
-    articulated = bridge.articulate(query_text, synaptic_anchors)
+    # 2. HYBRID ARTICULATION (Only if Raw Logic Mode is OFF)
+    if st.session_state.raw_logic_mode:
+        articulated = None  # Skip Gemma entirely in Raw Logic Mode
+    else:
+        articulated = bridge.articulate(query_text, synaptic_anchors)
     
     return synaptic_anchors, articulated
 
@@ -333,6 +364,23 @@ def fragment_sidebar_status():
     
     # --- STEP 14: Metabolic Balance ---
     st.progress(brain.metabolic_balance / 2.0, text=f"Metabolic Balance: {brain.metabolic_balance:.2f}x")
+    
+    # --- RAW LOGIC MODE TOGGLE ---
+    st.divider()
+    st.markdown("### 🔬 Raw Logic Mode")
+    st.session_state.raw_logic_mode = st.toggle(
+        "Disable Gemma (Prove Hebbian)",
+        value=st.session_state.raw_logic_mode,
+        help="Turn OFF Gemma to prove the Hebbian brain works independently. Shows only raw synaptic output."
+    )
+    if st.session_state.raw_logic_mode:
+        st.warning("🔬 **RAW MODE**: Gemma OFF. Responses are pure Hebbian associations.")
+    else:
+        st.success("🌐 **HYBRID MODE**: Gemma articulates Hebbian thoughts.")
+    
+    # Show last weight delta as proof of learning
+    if st.session_state.last_weight_delta > 0:
+        st.metric("📊 Last ΔW (Learning Proof)", f"{st.session_state.last_weight_delta:.6f}")
 
 @st.fragment
 def fragment_sidebar_feeding():
@@ -348,8 +396,8 @@ def fragment_sidebar_feeding():
         with st.spinner("Digesting..."):
             for f in uploaded_files:
                 raw_bytes = f.read()
-                stability = feed_organism(raw_bytes, f.name)
-                st.success(f"✅ Digested `{f.name}` | Stability: {stability:.4f}")
+                stability, weight_delta = feed_organism(raw_bytes, f.name)
+                st.success(f"✅ Digested `{f.name}` | Stability: {stability:.4f} | ΔW: {weight_delta:.6f}")
 
 @st.fragment
 def fragment_sidebar_controls():
@@ -433,12 +481,14 @@ def fragment_sidebar_controls():
                 try:
                     with open(f_path, 'rb') as f:
                         raw_bytes = f.read()
-                        if raw_bytes: feed_organism(raw_bytes, os.path.basename(f_path))
-                except: continue
+                        if raw_bytes: 
+                            stability, _ = feed_organism(raw_bytes, os.path.basename(f_path))
+                except (IOError, OSError) as e:
+                    continue  # Skip files that can't be read
             st.success(f"Consumed {len(found_files)} knowledge nodes.")
 
     st.divider()
-    st.markdown("### 🌌 AGI Endgame Controls (Stages 15-21)")
+    st.markdown("### 🌌 Advanced Dynamics Controls (Stages 15-21)")
     
     # Criticality Slider (Stage 21)
     new_crit = st.slider("Criticality (Order ↔ Chaos)", 0.0, 1.0, float(brain.criticality_score), 0.05)
@@ -521,7 +571,7 @@ def fragment_metrics():
     col5.metric("🌐 Bridge", "Online" if bridge.client else "Offline")
     
     # Row 2: AGI Endgame metrics
-    st.markdown("### 🌌 AGI Endgame Status")
+    st.markdown("### 🌌 Advanced Dynamics Status")
     col1, col2, col3, col4, col5, col6 = st.columns(6)
     col1.metric("🪞 Confidence", f"{brain.metacognition_confidence:.2f}")
     col2.metric("🔥 Motivation", brain.motivation_state)
@@ -559,24 +609,27 @@ def fragment_knowledge_injection():
         text_input = st.text_area("Paste text to feed:", height=100, key="text_feed_input")
         if st.button("🍽️ Feed Text"):
             if text_input:
-                stability = feed_organism(text_input.encode('utf-8')[:4096], "text_input")
-                st.success(f"✅ Digested | Stability: {stability:.4f}")
+                stability, weight_delta = feed_organism(text_input.encode('utf-8')[:4096], "text_input")
+                st.success(f"✅ Digested | Stability: {stability:.4f} | ΔW: {weight_delta:.6f}")
     with tab2:
         feeds = [("🔬 Science Daily", "https://www.sciencedaily.com/rss/all.xml"),
                  ("🤖 arXiv AI", "http://export.arxiv.org/rss/cs.AI"),
                  ("💻 Hacker News", "https://news.ycombinator.com/rss")]
         selected_feed = st.selectbox("Select Feed:", [f[0] for f in feeds], key="feed_select")
         if st.button("📡 Fetch Feed"):
-            import requests; import xml.etree.ElementTree as ET
-            feed_url = [f[1] for f in feeds if f[0] == selected_feed][0]
-            try:
-                r = requests.get(feed_url, headers={'User-Agent': 'NanoDaemon/1.0'}, timeout=10)
-                root = ET.fromstring(r.text)
-                for item in root.findall('.//item')[:5]:
-                    title = item.find('title').text
-                    stability = feed_organism(title.encode('utf-8')[:512], "rss_feed")
-                    st.success(f"📰 {title[:50]}... | {stability:.4f}")
-            except Exception as e: st.error(f"Error: {e}")
+            if not RSS_AVAILABLE:
+                st.error("RSS functionality requires 'requests' package. Install with: pip install requests")
+            else:
+                feed_url = [f[1] for f in feeds if f[0] == selected_feed][0]
+                try:
+                    r = requests.get(feed_url, headers={'User-Agent': 'NanoDaemon/1.0'}, timeout=10)
+                    root = ET.fromstring(r.text)
+                    for item in root.findall('.//item')[:5]:
+                        title = item.find('title').text
+                        stability, _ = feed_organism(title.encode('utf-8')[:512], "rss_feed")
+                        st.success(f"📰 {title[:50]}... | Stability: {stability:.4f}")
+                except Exception as e: 
+                    st.error(f"Error fetching feed: {e}")
 
 @st.fragment
 def fragment_history_gallery():
@@ -631,8 +684,8 @@ with st.sidebar:
     else: st.warning("🟡 Organic Mode Active")
 
 # Main Content Orchestration
-st.markdown("# 🧬 Nano-Daemon: Recursive Hebbian Organism")
-st.markdown("*A self-evolving digital lifeform with hybrid intelligence*")
+st.markdown("# 🧬 Nano-Daemon: Hebbian Organism")
+st.markdown("*A Neuromorphic Simulation of Homeostatic Plasticity*")
 
 fragment_metrics()
 st.divider()
@@ -648,11 +701,11 @@ fragment_knowledge_injection()
 fragment_autonomous_ruminator()
 
 # Static Expanders
-with st.expander("📚 Hyper-Intelligence Features", expanded=False):
-    st.markdown("### 🧬 The 21 Stages of Cognitive Ascension")
-    st.markdown("*A mathematically-grounded pathway from simple neural plasticity to Artificial General Intelligence*")
+with st.expander("📚 Feature Specification (Honest Documentation)", expanded=False):
+    st.markdown("### 🧬 The 21 Stages of Cognitive Development")
+    st.markdown("*A Hebbian-inspired implementation of neuromorphic concepts. **Note:** These are simplified simulations, not true cognition.*")
     
-    tier1, tier2, tier3 = st.tabs(["🧬 Core Neural (1-7)", "🧠 Cognitive (8-14)", "🌌 AGI Endgame (15-21)"])
+    tier1, tier2, tier3 = st.tabs(["🧬 Core Neural (1-7)", "🧠 Cognitive (8-14)", "🌌 Advanced Dynamics (15-21)"])
     
     with tier1:
         st.markdown("""
@@ -692,8 +745,8 @@ with st.expander("📚 Hyper-Intelligence Features", expanded=False):
     
     with tier3:
         st.markdown("""
-        ### 🌌 Tier 3: AGI Endgame
-        *The final leap: self-awareness, causal reasoning, and adaptive criticality.*
+        ### 🌌 Tier 3: Advanced Dynamics
+        *Experimental features inspired by cognitive science. These are **simplified simulations**, not true self-awareness.*
         
         | # | Feature | Mathematical Basis | AGI Contribution |
         |---|---------|-------------------|------------------|
@@ -717,10 +770,12 @@ with st.expander("📚 Hyper-Intelligence Features", expanded=False):
           Sensation      Memory              Reasoning              Self-Awareness
         ```
         
-        The Nano-Daemon is not *pretending* to be intelligent—it is **learning, adapting, and self-regulating** through mathematically-grounded mechanisms inspired by:
-        - 🧠 Neuroscience (Hebbian learning, synaptic pruning)
-        - 🤖 AI Research (Active Inference, World Models)
+        The Nano-Daemon is a **research prototype** demonstrating Hebbian learning principles. It simulates:
+        - 🧠 Neuroscience concepts (Hebbian learning, synaptic pruning)
+        - 🤖 AI research ideas (Active Inference, World Models)
         - 🌀 Complexity Science (Edge-of-Chaos, Criticality)
+        
+        **Honest Disclaimer:** The "intelligence" in dialogue comes primarily from the Gemma LLM bridge. Use **Raw Logic Mode** to see the actual Hebbian output.
         """)
 
 
