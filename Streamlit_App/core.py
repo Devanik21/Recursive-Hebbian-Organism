@@ -164,7 +164,7 @@ class PlasticCortex(nn.Module):
             return True
         return False
 
-    def forward(self, byte_stream, override_weights=None):
+    def forward(self, byte_stream, override_weights=None, disable_learning=False):
         """Main forward pass.
         
         Args:
@@ -195,6 +195,7 @@ class PlasticCortex(nn.Module):
         batch_size = x.shape[0]
         
         last_activation = torch.zeros(batch_size, self.synapse.shape[1]).to(x.device)
+        mean_signal = torch.zeros(batch_size, W.shape[0]).to(x.device)  # Accumulator for batch plasticity
         total_entropy = 0
         total_excitation = 0
         total_prediction_error = 0
@@ -221,6 +222,9 @@ class PlasticCortex(nn.Module):
             signal = 0.6 * curr_signal + 0.3 * self.short_term_latent + 0.1 * self.long_term_latent
             signal = signal * self.metabolic_balance # Metabolic scaling
             
+            # Accumulate for mean signal (batch plasticity)
+            mean_signal += signal
+            
             # Update Latent Streams
             with torch.no_grad():
                 self.short_term_latent.data = (self.st_decay * self.short_term_latent + (1 - self.st_decay) * signal.mean(dim=0, keepdim=True)).detach()
@@ -235,7 +239,9 @@ class PlasticCortex(nn.Module):
             total_entropy += entropy
 
             # 4. HEBBIAN LEARNING (Advanced Cognitive Core)
-            with torch.no_grad():
+            # CRITICAL: Only run if NOT using external Genome ("Hollow-Out")
+            if override_weights is None and not disable_learning:
+              with torch.no_grad():
                 # --- STEP 6: Curvature-Aware Plasticity + STEP 11 Surpise ---
                 # Surprising information triggers 10x higher learning intensity
                 dynamic_plasticity = self.plasticity * (1.0 + entropy * 10) * (1.0 + surprise * 2.0) * dhl_boost
@@ -341,7 +347,10 @@ class PlasticCortex(nn.Module):
                 self.experience_buffer.pop(0)
             self.experience_buffer.append(byte_stream.detach())
 
-        return last_activation, total_entropy / seq_len, signal
+        # Normalize mean signal for batch plasticity
+        mean_signal = mean_signal / (seq_len if seq_len > 0 else 1)
+
+        return last_activation, total_entropy / seq_len, mean_signal
 
     def _fast_forward(self, x, W):
         """Vectorized fast path: Processes sequence mean instead of step-by-step.
