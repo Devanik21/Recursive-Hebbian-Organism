@@ -375,7 +375,7 @@ def trigger_dream():
 # UI FRAGMENTS (For Independent Reruns)
 # ============================================================
 
-@st.fragment(run_every=2)
+@st.fragment(run_every=10)
 def fragment_sidebar_status():
     st.markdown("## 🧬 Organism Status")
     neuron_count = brain.synapse.shape[1]
@@ -406,6 +406,7 @@ def fragment_sidebar_status():
     st.session_state.raw_logic_mode = st.toggle(
         "Disable Gemma (Prove Hebbian)",
         value=st.session_state.raw_logic_mode,
+        key="raw_logic_mode_toggle",
         help="Turn OFF Gemma to prove the Hebbian brain works independently. Shows only raw synaptic output."
     )
     if st.session_state.raw_logic_mode:
@@ -526,7 +527,7 @@ def fragment_sidebar_controls():
     st.markdown("### 🌌 Advanced Dynamics Controls (Stages 15-21)")
     
     # Criticality Slider (Stage 21)
-    new_crit = st.slider("Criticality (Order ↔ Chaos)", 0.0, 1.0, float(brain.criticality_score), 0.05)
+    new_crit = st.slider("Criticality (Order ↔ Chaos)", 0.0, 1.0, float(brain.criticality_score), 0.05, key="criticality_slider")
     brain.criticality_score = new_crit
     
     col_agi1, col_agi2 = st.columns(2)
@@ -572,6 +573,7 @@ def fragment_sidebar_controls():
     st.session_state.use_evolved_rule = st.checkbox(
         "🧠 Use Evolved Rule (Genome-Driven Plasticity)",
         value=st.session_state.use_evolved_rule,
+        key="use_evolved_rule_checkbox",
         help="When ON, feeding uses the meta-learned Genome instead of Oja's Rule"
     )
     
@@ -614,7 +616,7 @@ def fragment_sidebar_controls():
         total_eps = len(st.session_state.meta_loss_history)
         st.metric("Genome Evolution", f"{total_eps} episodes", f"Loss: {latest:.4f}")
 
-@st.fragment(run_every=2)
+@st.fragment
 def fragment_dialogue():
     st.markdown("## 💬 Dialogue with the Organism")
     query = st.text_input("🗣️ Ask the Organism anything:", placeholder="e.g., What is consciousness?", key="query_input")
@@ -644,7 +646,7 @@ def fragment_dialogue():
         else:
             st.info("🌑 **Cerebral Bridge Offline**")
 
-@st.fragment(run_every=3)
+@st.fragment(run_every=10)
 def fragment_metrics():
     st.markdown("## 📊 Cognitive Metrics")
     
@@ -736,7 +738,7 @@ def fragment_history_gallery():
 # ============================================================
 # STEP 15: AUTONOMOUS RUMINATOR
 # ============================================================
-@st.fragment(run_every=10) # Ruminate every 10 seconds
+@st.fragment(run_every=30) # Ruminate every 30 seconds
 def fragment_autonomous_ruminator():
     # Only ruminate if metabolic cycle allows (Active or Neutral)
     current_hour = datetime.datetime.now().hour
