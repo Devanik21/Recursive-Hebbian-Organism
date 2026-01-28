@@ -363,7 +363,7 @@ def fragment_sidebar_status():
         st.metric("📂 Eaten", st.session_state.files_eaten)
     
     # --- STEP 14: Metabolic Balance ---
-    st.progress(brain.metabolic_balance / 2.0, text=f"Metabolic Balance: {brain.metabolic_balance:.2f}x")
+    st.progress(brain.metabolic_balance / 5.0, text=f"Metabolic Balance: {brain.metabolic_balance:.2f}x")
     
     # --- RAW LOGIC MODE TOGGLE ---
     st.divider()
