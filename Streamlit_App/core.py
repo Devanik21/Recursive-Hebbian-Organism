@@ -164,13 +164,29 @@ class PlasticCortex(nn.Module):
             return True
         return False
 
-    def forward(self, byte_stream):
+    def forward(self, byte_stream, override_weights=None):
+        """Main forward pass.
+        
+        Args:
+            byte_stream: Input byte tensor
+            override_weights: Optional weight tensor for meta-learning (functional weights).
+                              If provided, uses these instead of self.synapse for computation.
+                              This preserves the gradient graph for the outer loop.
+        
+        Returns:
+            activation: Post-synaptic activation
+            entropy: Average entropy across sequence
+            signal: Pre-synaptic signal (for plasticity rule computation)
+        """
+        # Use override weights if provided (for meta-learning), else use internal weights
+        W = override_weights if override_weights is not None else self.synapse
+        
         # 1. SENSATION: Convert bytes to vectors
         x = self.byte_embed(byte_stream) # [Batch, Seq, Dim]
         
         # --- FAST MODE: Vectorized processing (simpler but faster) ---
         if self.fast_mode:
-            return self._fast_forward(x)
+            return self._fast_forward(x, W)
         
         # 2. TEMPORAL PROCESSING: Process byte-by-byte
         # This is the "Smart" fix: Instead of averaging the whole block, 
@@ -210,8 +226,8 @@ class PlasticCortex(nn.Module):
                 self.short_term_latent.data = (self.st_decay * self.short_term_latent + (1 - self.st_decay) * signal.mean(dim=0, keepdim=True)).detach()
                 self.long_term_latent.data = (self.lt_decay * self.long_term_latent + (1 - self.lt_decay) * signal.mean(dim=0, keepdim=True)).detach()
 
-            # 3. ACTIVATION
-            response = torch.matmul(signal, self.synapse)
+            # 3. ACTIVATION (Use functional weights W, not self.synapse)
+            response = torch.matmul(signal, W)
             activation = torch.tanh(response) # [Batch, Hidden]
             
             # Compute Entropy
@@ -325,11 +341,19 @@ class PlasticCortex(nn.Module):
                 self.experience_buffer.pop(0)
             self.experience_buffer.append(byte_stream.detach())
 
-        return last_activation, total_entropy / seq_len
+        return last_activation, total_entropy / seq_len, signal
 
-    def _fast_forward(self, x):
+    def _fast_forward(self, x, W):
         """Vectorized fast path: Processes sequence mean instead of step-by-step.
-        Faster but loses some temporal learning dynamics."""
+        Faster but loses some temporal learning dynamics.
+        
+        Args:
+            x: Embedded input tensor
+            W: Weight matrix (functional weights for meta-learning)
+        
+        Returns:
+            activation, entropy, signal (for plasticity rule)
+        """
         batch_size = x.shape[0]
         seq_len = x.shape[1]
         
@@ -347,8 +371,8 @@ class PlasticCortex(nn.Module):
             self.long_term_latent.data = (self.lt_decay * self.long_term_latent + 
                                           (1 - self.lt_decay) * signal.mean(dim=0, keepdim=True)).detach()
         
-        # Activation
-        response = torch.matmul(signal, self.synapse)
+        # Activation (Use functional weights W)
+        response = torch.matmul(signal, W)
         activation = torch.tanh(response)
         
         # Entropy
@@ -373,7 +397,7 @@ class PlasticCortex(nn.Module):
             # Motivation (Simple placeholder logic for fast mode)
             self.motivation_state = "ENGAGED" if entropy > 0.1 else "NEUTRAL"
         
-        return activation, entropy
+        return activation, entropy, signal
 
     def consolidate(self):
         """Phase 2: Consolidation Cycle (Deeper Thinking).
@@ -402,14 +426,14 @@ class PlasticCortex(nn.Module):
         """Metabolic Reflection: The brain ponders on its own state."""
         with torch.no_grad():
             # Feed current latent memory back in as a perception
-            activation, entropy = self.forward(torch.randint(0, 256, (1, 1))) # Tiny pulse
+            activation, entropy, _ = self.forward(torch.randint(0, 256, (1, 1))) # Tiny pulse
             return activation, entropy
 
     def associate(self, byte_stream):
         """STEP 9: Recursive Associative Refinement. "Thinking twice" before speaking."""
         with torch.no_grad():
             # Initial thought
-            activation, _ = self.forward(byte_stream) # [Batch, Hidden]
+            activation, _, _ = self.forward(byte_stream) # [Batch, Hidden]
             
             # Refine the thought 3 times
             for _ in range(3):
