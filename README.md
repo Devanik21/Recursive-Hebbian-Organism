@@ -876,29 +876,4 @@ The unifying thread is **discovering rather than designing**—allowing systems 
 
 ---
 
-## LinkedIn Optimization Recommendations
 
-**Your Current Intro Analysis:**
-
-**KEEP (Strong Signals - 9/10):**
-- ✅ **Samsung Fellowship (Grade I) – IISc** — Extremely prestigious, keep prominent
-- ✅ **ISRO Space Hackathon Winner** — National-level achievement, strong signal
-- ✅ **Research Intern (Astrophysics × ML)** — Shows interdisciplinary capability
-- ✅ **B.Tech ECE '26 @ NIT Agartala** — Educational foundation
-- ✅ **Applied AI/ML Researcher** — Core identity
-
-**CONSIDER REMOVING (Lower ROI for research profile):**
-- ⚠️ **LeetCode 1822 (Max)** — Strong for SWE/competitive programming, less relevant for research. **Recommendation**: Remove if targeting PhD/research positions. Keep if targeting ML Engineer roles at FAANG.
-- ⚠️ **Kaggle Competitions Contributor** — Too generic without specific achievements. **Recommendation**: Either specify medals/ranks ("Kaggle Expert, 2x Silver Medalist") or remove.
-
-**MUST ADD:**
-- 🎯 **Research Focus** — Add "Neuromorphic Computing | Meta-Learning | Bio-Inspired AI"
-- 🎯 **Specific Achievement** — "Creator of Differentiable Plasticity Framework" or "X+ Open-Source AI Projects"
-- 🎯 **Publication Count** — If any papers/preprints, mention them
-
-**Optimized Version (Recommended):**
-
-*"B.Tech ECE '26 @ NIT Agartala | Samsung Fellowship (Grade I) – IISc | ISRO Space Hackathon Winner | Research Intern (Astrophysics × ML) | Applied AI/ML Researcher — Neuromorphic Computing, Meta-Learning, Bio-Inspired AI | Creator of Differentiable Plasticity Framework & 10+ Open-Source AI Systems"*
-
-**Character Count**: ~290 (fits LinkedIn limit)  
-**Impact**: Leads with education → credentials → achievements → research focus → concrete outputs
