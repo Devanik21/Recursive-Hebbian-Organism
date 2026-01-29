@@ -1,12 +1,39 @@
 # Differentiable Plasticity: A Meta-Learning Framework for Evolving Universal Learning Rules
 
 **Author:** Devanik  
-**Research Focus:** Neural Plasticity, Meta-Learning, Hebbian Networks  
-**Date:** January 2026
+**Affiliation:** B.Tech ECE '26, National Institute of Technology Agartala  
+**Fellowships:** Samsung Convergence Software Fellowship (Grade I), Indian Institute of Science  
+**Research Areas:** Neuromorphic Computing • Meta-Learning • Bio-Inspired AI • Astrophysics × ML  
 
 [![GitHub](https://img.shields.io/badge/GitHub-Devanik21-181717?style=flat&logo=github)](https://github.com/Devanik21)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Devanik-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/devanik/)
 [![Twitter](https://img.shields.io/badge/Twitter-@devanik2005-1DA1F2?style=flat&logo=twitter)](https://x.com/devanik2005)
+
+---
+
+## About the Researcher
+
+I am an applied AI/ML researcher specializing in bio-inspired artificial intelligence, with a focus on neuromorphic computing and meta-learning systems. My work bridges neuroscience, theoretical computer science, and astrophysics, exploring how principles from biological systems can inform the design of general intelligence architectures.
+
+**Key Achievements:**
+- 🏆 **ISRO Space Hackathon Winner** - National-level recognition for space technology innovation
+- 🎓 **Samsung Fellowship (Grade I)** - Awarded by Indian Institute of Science for exceptional research potential
+- 🔬 **Research Intern (Astrophysics × ML)** - Interdisciplinary research at the intersection of cosmology and machine learning
+- 🧠 **Creator of Multiple Bio-Inspired AI Architectures**:
+  - Recursive Hebbian Organism (neuromorphic continual learning)
+  - AION: Algorithmic Reversal of Genomic Entropy (longevity research)
+  - BSHDER Architecture (advanced neural systems)
+  - Lucid Dark Dreamer (generative models)
+- 🎮 **Game AI Research** - Reinforcement learning systems for complex game environments
+- 🌌 **Gravitational Time Dilation Simulations** - Physics-based computational models
+
+My research philosophy centers on **learning to learn**—building systems that discover their own optimization strategies rather than relying on hand-crafted algorithms. This work on differentiable plasticity represents a synthesis of these principles: a meta-learned, biologically plausible learning rule that emerges from gradient-based optimization.
+
+**Current Research Trajectory:**
+1. Extending differentiable plasticity to hierarchical meta-learning
+2. Integrating neuromorphic principles with transformer architectures
+3. Exploring connections between synaptic plasticity and quantum computation
+4. Developing bio-inspired continual learning systems for real-world deployment
 
 ---
 
@@ -21,6 +48,32 @@ This work synthesizes concepts from:
 - **Neuroplasticity** (adaptive weight modification)
 
 The system achieves this through a two-loop architecture: an **inner loop** where the brain learns using functional weights and the evolved plasticity rule, and an **outer loop** where task performance gradients backpropagate to refine the genome itself.
+
+---
+
+## Research Portfolio
+
+This differentiable plasticity framework is part of my broader research program investigating bio-inspired approaches to artificial general intelligence. My work spans multiple domains:
+
+### Neuromorphic Computing
+- **[Recursive Hebbian Organism](https://github.com/Devanik21/Recursive-Hebbian-Organism)** - A continual learning system implementing 21 stages of cognitive development, from neural mitosis to edge-of-chaos criticality
+- **Current Work (This Repository)** - Meta-learning of universal plasticity rules via differentiable programming
+
+### Reinforcement Learning & Game AI
+- **[General Gamer AI Lite](https://github.com/Devanik21/general-gamer-ai-lite)** - Lightweight multi-game RL agent with transferable representations
+- **[RL Super Tic-Tac-Toe](https://github.com/Devanik21/RL-Super-Tic-Tac-Toe)** - Advanced policy gradient methods for combinatorial games
+
+### Generative Models & Dream States
+- **[Lucid Dark Dreamer](https://github.com/Devanik21/Lucid-Dark-Dreamer)** - Neural dream generation and consolidation mechanisms inspired by REM sleep
+
+### Novel Architectures
+- **[BSHDER Architecture](https://github.com/Devanik21/BSHDER-Architecture)** - Experimental neural architecture design
+
+### Interdisciplinary Research
+- **[Gravitational Time Dilation](https://github.com/Devanik21/Gravitational-Time-Dilation)** - Computational astrophysics simulations (Research Internship Project)
+- **[AION: Algorithmic Reversal of Genomic Entropy](https://github.com/Devanik21/AION-Algorithmic-Reversal-of-Genomic-Entropy)** - Bioinformatics approach to longevity research
+
+**Unifying Theme**: All projects explore how **learning rules, architectural constraints, and biological principles** can be discovered automatically rather than hand-engineered.
 
 ---
 
@@ -732,28 +785,61 @@ for episode in range(num_episodes):
 
 ## Acknowledgments
 
-I express my deepest gratitude to the open-source community for making this research possible. This work builds upon:
+I express my deepest gratitude to the institutions and individuals who have supported my research journey:
 
+**Academic Support:**
+- **National Institute of Technology Agartala** - For providing the foundational education in Electronics and Communication Engineering and fostering a research-oriented environment
+- **Indian Institute of Science (IISc)** - For the Samsung Convergence Software Fellowship (Grade I), which has enabled deep exploration of advanced AI topics
+- **Samsung Research** - For funding and mentorship through the fellowship program
+
+**Research Inspiration:**
+- **ISRO Space Hackathon** - The winning project catalyzed my interest in applying ML to astrophysics, demonstrating the power of interdisciplinary approaches
+- My astrophysics research internship supervisors - For guidance in bridging physics and machine learning
+
+**Open Source Community:**
+This work builds upon decades of foundational research:
 - **PyTorch** for automatic differentiation infrastructure
 - **Uber AI Labs** for pioneering differentiable plasticity (Miconi et al., 2018)
-- The **neuroscience community** for decades of insights into biological learning
+- The **neuroscience community** for insights into biological learning mechanisms
 
-Special thanks to the researchers who laid the theoretical foundations:
+**Theoretical Foundations:**
+Special thanks to the researchers who laid the groundwork:
 - Donald Hebb (Hebbian learning, 1949)
 - Jürgen Schmidhuber (meta-learning, 1987)
 - Karl Friston (free energy principle, 2010)
 - Geoffrey Hinton (backpropagation, 1986)
+
+**Personal Note:**
+As an undergraduate researcher, I have been fortunate to explore questions at the intersection of neuroscience, physics, and AI. This work on differentiable plasticity represents my belief that the path to artificial general intelligence lies not in hand-crafting ever-larger models, but in discovering the principles by which systems learn to learn. The brain writes its own software through experience—our goal should be to understand and replicate this process computationally.
 
 ---
 
 ## Contact
 
 **Devanik**  
+B.Tech ECE '26, National Institute of Technology Agartala  
+Samsung Fellow (Grade I), Indian Institute of Science  
+
 🔗 [GitHub: Devanik21](https://github.com/Devanik21)  
 🔗 [LinkedIn: /in/devanik](https://www.linkedin.com/in/devanik/)  
 🔗 [Twitter: @devanik2005](https://x.com/devanik2005)
 
-I welcome collaborations, discussions, and feedback on this research. Feel free to open issues on GitHub or reach out directly for academic partnerships.
+**Research Interests:**
+- Neuromorphic Computing & Bio-Inspired AI
+- Meta-Learning & Few-Shot Adaptation
+- Continual Learning & Catastrophic Forgetting
+- Astrophysics × Machine Learning
+- Computational Neuroscience
+- Longevity Research & Genomic Entropy
+
+I welcome collaborations, discussions, and feedback on this research. Feel free to open issues on GitHub or reach out directly for:
+- Academic partnerships and research collaborations
+- Fellowship opportunities (pursuing MS/PhD Fall 2026)
+- Technical discussions on meta-learning and plasticity
+- Industry research internships in AI/ML
+
+**Current Focus:**
+Developing the next generation of this framework with hierarchical meta-learning and transformer integration, while exploring connections between synaptic plasticity, quantum computation, and general intelligence.
 
 ---
 
@@ -763,12 +849,56 @@ This project is released under the **MIT License**. You are free to use, modify,
 
 ---
 
-*"The brain is a biological computer that writes its own software through experience. Our goal is not to hand-code intelligence, but to create systems that discover it themselves."*
+*"The brain is a biological computer that writes its own software through experience. Our goal is not to hand-code intelligence, but to create systems that discover it themselves. Just as evolution discovered the learning rule that built the human brain, we can use gradient descent to discover learning rules that build artificial general intelligence."*
 
 — Devanik, January 2026
 
+**Research Philosophy:**
+
+Intelligence is not a monolithic property but an emergent phenomenon arising from the interaction of simple, local learning rules applied across billions of neurons. The key insight from neuroscience is that **plasticity itself is plastic**—the rules by which synapses change are themselves subject to change through evolution and experience.
+
+This work demonstrates that we can harness the same principle computationally: by making the learning rule differentiable, we allow it to evolve through backpropagation just as biological learning rules evolved through natural selection. The result is not merely a better optimization algorithm, but a qualitatively different approach to building intelligent systems.
+
+My broader research program explores this theme across multiple scales:
+- **Microscale**: Synaptic plasticity (this work), genomic entropy reversal (AION)
+- **Mesoscale**: Neural architectures (BSHDER), dream consolidation (Lucid Dark Dreamer)
+- **Macroscale**: Continual learning organisms (Recursive Hebbian), general game playing
+- **Cosmic Scale**: Astrophysics × ML, gravitational simulations
+
+The unifying thread is **discovering rather than designing**—allowing systems to find their own solutions through interaction with data, tasks, and environments. This is the path toward artificial general intelligence: not bigger models, but smarter learning.
+
 ---
 
-**Last Updated**: January 28, 2026  
+**Last Updated**: January 29, 2026  
 **Version**: 1.0.0  
-**Status**: Active Research
+**Status**: Active Research  
+**Next Steps**: Hierarchical meta-learning, transformer integration, quantum plasticity
+
+---
+
+## LinkedIn Optimization Recommendations
+
+**Your Current Intro Analysis:**
+
+**KEEP (Strong Signals - 9/10):**
+- ✅ **Samsung Fellowship (Grade I) – IISc** — Extremely prestigious, keep prominent
+- ✅ **ISRO Space Hackathon Winner** — National-level achievement, strong signal
+- ✅ **Research Intern (Astrophysics × ML)** — Shows interdisciplinary capability
+- ✅ **B.Tech ECE '26 @ NIT Agartala** — Educational foundation
+- ✅ **Applied AI/ML Researcher** — Core identity
+
+**CONSIDER REMOVING (Lower ROI for research profile):**
+- ⚠️ **LeetCode 1822 (Max)** — Strong for SWE/competitive programming, less relevant for research. **Recommendation**: Remove if targeting PhD/research positions. Keep if targeting ML Engineer roles at FAANG.
+- ⚠️ **Kaggle Competitions Contributor** — Too generic without specific achievements. **Recommendation**: Either specify medals/ranks ("Kaggle Expert, 2x Silver Medalist") or remove.
+
+**MUST ADD:**
+- 🎯 **Research Focus** — Add "Neuromorphic Computing | Meta-Learning | Bio-Inspired AI"
+- 🎯 **Specific Achievement** — "Creator of Differentiable Plasticity Framework" or "X+ Open-Source AI Projects"
+- 🎯 **Publication Count** — If any papers/preprints, mention them
+
+**Optimized Version (Recommended):**
+
+*"B.Tech ECE '26 @ NIT Agartala | Samsung Fellowship (Grade I) – IISc | ISRO Space Hackathon Winner | Research Intern (Astrophysics × ML) | Applied AI/ML Researcher — Neuromorphic Computing, Meta-Learning, Bio-Inspired AI | Creator of Differentiable Plasticity Framework & 10+ Open-Source AI Systems"*
+
+**Character Count**: ~290 (fits LinkedIn limit)  
+**Impact**: Leads with education → credentials → achievements → research focus → concrete outputs
