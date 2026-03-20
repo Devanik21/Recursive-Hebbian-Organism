@@ -4,7 +4,7 @@
 **Affiliation:** B.Tech ECE '26, National Institute of Technology Agartala  
 **Fellowships:** Samsung Convergence Software Fellowship (Grade I), Indian Institute of Science  
 **Research Areas:** Neuromorphic Computing • Meta-Learning • Bio-Inspired AI • Astrophysics × ML  
-
+ 
 [![GitHub](https://img.shields.io/badge/GitHub-Devanik21-181717?style=flat&logo=github)](https://github.com/Devanik21)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Devanik-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/devanik/)
 [![Twitter](https://img.shields.io/badge/Twitter-@devanik2005-1DA1F2?style=flat&logo=twitter)](https://x.com/devanik2005)
