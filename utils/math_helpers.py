@@ -1,4 +1,4 @@
-import numpy as np
+import torch
 
 def normalize(weights):
-    return weights / (np.linalg.norm(weights) + 1e-8)
+    return weights / (torch.linalg.norm(weights) + 1e-8)
